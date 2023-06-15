@@ -1,4 +1,4 @@
-# Robocopy Params:
+﻿# Robocopy Params:
 #   /SJ = Não seguir junctionLinks
 #   /SL = Não seguir symbolicLinks
 #   /R = Retentar 1 vez

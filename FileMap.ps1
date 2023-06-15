@@ -1,4 +1,4 @@
-# Classe para facilitar a navegação no mapa de arquivos
+﻿# Classe para facilitar a navegação no mapa de arquivos
 #   FileMap <- NameMap <- VersionMap <- RemotionMap = 4 Classes, usadas para simplificar o acesso a $hashMap
 #   NameMap, VersionMap, e RemotionMap utilizam $currentKey para acessar $hashMap. Há apenas 1 instância de cada
 Class FileMap {

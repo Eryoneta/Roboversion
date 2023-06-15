@@ -1,4 +1,4 @@
-# . "./RoboVersion.ps1";
+﻿# . "./RoboVersion.ps1";
 
 Function EchoMap($hashMap) {
 	ForEach($nameKey In $hashMap.List()) {
@@ -45,4 +45,3 @@ Function Test_GetOrderedFilesMap() {
 	$orderedMap = GetOrderedFilesMap $filePathList2;
 	EchoMap $orderedMap;
 }
-Test_GetOrderedFilesMap;

@@ -1,4 +1,4 @@
-. "./FileMap.ps1";
+﻿. "./FileMap.ps1";
 . "./Functions.ps1";
 
 Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotionCountdown, $destructive) {
@@ -13,10 +13,13 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 	. "./Functions.ps1";
 	. "./DevTools.ps1";
 	
+	
 	# Lista os arquivos versionados e removidos
 	$modifiedFilesMap = (GetModifiedFilesMap $destPath $threads);
 	
 	EchoMap $modifiedFilesMap;
+	
+	Test-Path $modifiedFilesMap.Get("C:\Folder\SubFolder\File1.ext").Get(15).Get(-1).Path;
 	
 	# Atualiza os arquivos versionados e removidos em $destPath
 	# updateModified $modifiedFilesMap $maxVersionLimit $remotionCountdown $destructive;
