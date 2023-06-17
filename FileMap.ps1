@@ -34,6 +34,8 @@ Class FileMap {
 		[void] CheckMap($nameKey) {
 			If(-Not $this.fileMap.hashMap.Contains($nameKey)) {
 				$this.fileMap.hashMap[[object]$nameKey] = [ordered]@{};
+			} ElseIf($this.fileMap.hashMap[[object]$nameKey].Count -eq 0) {
+				$this.fileMap.hashMap.Remove([object]$nameKey);
 			}
 		}
 		# GET
@@ -65,6 +67,8 @@ Class FileMap {
 				$nameKey = $this.nameMap.currentKey;
 				If(-Not $this.nameMap.fileMap.hashMap[[object]$nameKey].Contains($versionKey)) {
 					$this.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey] = [ordered]@{};
+				} ElseIf($this.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey].Count -eq 0) {
+					$this.nameMap.fileMap.hashMap[[object]$nameKey].Remove([object]$versionKey);
 				}
 			}
 			# GET
@@ -78,6 +82,7 @@ Class FileMap {
 				$nameKey = $this.nameMap.currentKey;
 				$this.currentKey = $versionKey;
 				$this.nameMap.fileMap.hashMap[[object]$nameKey].Remove([object]$versionKey);
+				$this.nameMap.CheckMap($nameKey);
 			}
 			# LIST
 			[object] List() {
@@ -96,7 +101,7 @@ Class FileMap {
 					$nameKey = $this.versionMap.nameMap.currentKey;
 					$versionKey = $this.versionMap.currentKey;
 					If(-Not $this.versionMap.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey].Contains($remotionKey)) {
-						$this.versionMap.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey][[object]$versionKey] = $Null;
+						$this.versionMap.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey][[object]$remotionKey] = $Null;
 					}
 				}
 				# GET
@@ -120,6 +125,7 @@ Class FileMap {
 					$versionKey = $this.versionMap.currentKey;
 					$this.currentKey = $remotionKey;
 					$this.versionMap.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey].Remove([object]$remotionKey);
+					$this.versionMap.CheckMap($versionKey);
 				}
 				# LIST
 				[object] List() {

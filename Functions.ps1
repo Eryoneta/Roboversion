@@ -52,7 +52,7 @@ Function GetModifiedFilesMap($destPath, $threads) {
 	# Lista pastas-removidas
 	$removedFoldersList = ((Get-ChildItem -LiteralPath $destPath -Filter $wildcardOfRemovedFolder -Recurse -Directory) | ForEach {"$($_.FullName)"})
 	# Ordena lista de arquivos versionados e removidos e pastas removidas
-	$modifiedFilesMap = GetOrderedFilesMap ($modifiedFilesList_File + $removedFoldersList);
+	$modifiedFilesMap = GetFileMap ($modifiedFilesList_File + $removedFoldersList);
 	# Retorna a lista
 	Return $modifiedFilesMap;
 }
@@ -104,7 +104,7 @@ Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 #     }
 #   }
 #   Todos ficam listados em ordem numérica reversa
-Function GetOrderedFilesMap($filePathList) {
+Function GetFileMap($filePathList) {
 	$allFilesMap = [FileMap]::new();
 	$regexOfBaseName = "(?<BaseName>.*?)";
 	$regexOfVersion = "(?:" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[0-9]+)" + [Regex]::Escape($versionEnd)) + ")?";
@@ -150,15 +150,19 @@ Function GetOrderedFilesMap($filePathList) {
 		}
 	}
 	# Ordena a lista
-	$orderedFilesMap = [FileMap]::new();
-	ForEach($nameKey In $allFilesMap.List()) {
-		ForEach($versionKey In ($allFilesMap.Get($nameKey).List() | Sort-Object -Descending)) {
-			ForEach($remotionKey In ($allFilesMap.Get($nameKey).Get($versionKey).List() | Sort-Object -Descending)) {
-				$fileItem = $allFilesMap.Get($nameKey).Get($versionKey).Get($remotionKey);
-				$orderedFilesMap.Get($nameKey).Get($versionKey).Set($remotionKey, $fileItem);
+	$sortedFileMap = (SortFileMap $allFilesMap);
+	# Retorna o resultado
+	Return $sortedFileMap;
+}
+Function SortFileMap($fileMap) {
+	$sortedFileMap = [FileMap]::new();
+	ForEach($nameKey In $fileMap.List()) {
+		ForEach($versionKey In ($fileMap.Get($nameKey).List() | Sort-Object -Descending)) {
+			ForEach($remotionKey In ($fileMap.Get($nameKey).Get($versionKey).List() | Sort-Object -Descending)) {
+				$fileItem = $fileMap.Get($nameKey).Get($versionKey).Get($remotionKey);
+				$sortedFileMap.Get($nameKey).Get($versionKey).Set($remotionKey, $fileItem);
 			}
 		}
 	}
-	# Retorna o resultado
-	Return $orderedFilesMap;
+	Return $sortedFileMap;
 }

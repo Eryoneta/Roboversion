@@ -8,7 +8,7 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 	$threads=8;
 	$maxVersionLimit=3;
 	$remotionCountdown=5;
-	$destructive=$False;
+	$destructive=$True;
 	. "./FileMap.ps1";
 	. "./Functions.ps1";
 	. "./DevTools.ps1";
@@ -17,26 +17,26 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 	# Lista os arquivos versionados e removidos
 	$modifiedFilesMap = (GetModifiedFilesMap $destPath $threads);
 	
-	EchoMap $modifiedFilesMap;
-	
-	Test-Path $modifiedFilesMap.Get("C:\Folder\SubFolder\File1.ext").Get(15).Get(-1).Path;
+	EchoFileMap $modifiedFilesMap;
 	
 	# Atualiza os arquivos versionados e removidos em $destPath
-	# updateModified $modifiedFilesMap $maxVersionLimit $remotionCountdown $destructive;
-	# EchoMap $modifiedFilesMap;
+	$modifiedFilesMap = (UpdateModified $modifiedFilesMap $maxVersionLimit $remotionCountdown $destructive);
+	Echo "============";
+	EchoFileMap $modifiedFilesMap;
 	
 	# Lista os arquivos a versionar ou remover
 	# $toModifyFilesList = (GetToModifyFilesList $origPath $destPath $threads);
-	# EchoMap $modifiedFilesMap;
+	# EchoFileMap $modifiedFilesMap;
 	
 	# Atualiza os arquivos a versionar ou remover em $destPath
 	# updateToModify $modifiedFilesMap $toModifyFilesList $maxVersionLimit $remotionCountdown $destructive;
 	# Realiza a cópia
 	# Robocopy $origPath $destPath;
 }
-	Function updateModified($modifiedFilesMap, $maxVersionLimit, $remotionCountdown, $destructive) {
-		updateVersioned $modifiedFilesMap $maxVersionLimit $remotionCountdown $destructive;
-		# updateRemoved $modifiedFilesMap $maxVersionLimit $remotionCountdown $destructive;
+	Function UpdateModified($modifiedFilesMap, $maxVersionLimit, $remotionCountdown, $destructive) {
+		$modifiedFilesMap = (UpdateVersioned $modifiedFilesMap $maxVersionLimit $remotionCountdown $destructive);
+		# $modifiedFilesMap = (UpdateRemoved $modifiedFilesMap $maxVersionLimit $remotionCountdown $destructive);
+		Return $modifiedFilesMap;
 	}
 		# Atualiza os arquivos-versionados presentes no $destPath
 		#   Se $destructive = $True:
@@ -55,27 +55,21 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 		# Ex.: Dest(F_v9_r3(Y), F_v9_r1(Z))                                   --($maxVersionLimit=3,$remotionCountdown=5,$destructive)--> Dest(F_v3_r3(Y), F_v3_r1(Z))
 		# Ex.: Dest(F_v12_r39(A), F_v15_r45(B))                               --($maxVersionLimit=3,$remotionCountdown=5,$destructive)--> Dest(F_v2_r39(A), F_v3_r45(B))
 		# Ex.: Dest(F(A), F_v4(B), F_v5(C), F_v6(D), F_v7(E))                 --($maxVersionLimit=3,$destructive)--> Dest(F(B), F_v1(C), F_v2(D), F_v3(D))
-		Function updateVersioned($modifiedFilesMap, $maxVersionLimit, $remotionCountdown, $destructive) {
+		Function UpdateVersioned($modifiedFilesMap, $maxVersionLimit, $remotionCountdown, $destructive) {
 			If(-Not $destructive) {
-				Return;
+				Return $modifiedFilesMap;
 			}
-			
-			$origPath="D:\ \BKPM\LOC1";
-			$destPath="D:\ \BKPM\LOC2";
-			$threads=8;
-			$maxVersionLimit=3;
-			$remotionCountdown=5;
-			$modifiedFilesMap = (GetModifiedFilesMap $destPath $threads);
-			
-			# Aplica $maxVersionLimit, renomeando ou deletando
+			# Aplica $maxVersionLimit, listando arquivos para renomear ou deletar
+			$filesToDelete = [System.Collections.ArrayList]::new();
+			$filesToRename = [System.Collections.ArrayList]::new();
 			ForEach($nameKey In $modifiedFilesMap.List()) {
 				$unoccupiedVersionIndex = $maxVersionLimit;
-				ForEach($versionKey In $modifiedFilesMap.List($nameKey)) {
+				ForEach($versionKey In $modifiedFilesMap.Get($nameKey).List()) {
 					# Sem VersionIndex livres, então deletar
 					If($unoccupiedVersionIndex -lt 1) {
-						ForEach($removedKey In $modifiedFilesMap.List($nameKey, $versionKey)) {
-							$removedFile = $modifiedFilesMap.Get($nameKey, $versionKey, $removedKey);
-							Echo ("DELETE: " + $removedFile.Path);
+						ForEach($removedKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
+							$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($removedKey);
+							$Null = $filesToDelete.Add($removedFile);
 						}
 						Continue;
 					}
@@ -85,19 +79,52 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 						Continue;
 					}
 					# Renomear
-					$version = ($versionStart + $unoccupiedVersionIndex + $versionEnd);
-					$remotion = "";
-					ForEach($removedKey In $modifiedFilesMap.List($nameKey, $versionKey)) {
-						$removedFile = $modifiedFilesMap.Get($nameKey, $versionKey, $removedKey);
-						If($removedFile.RemotionCountdown -gt -1) {
-							$remotion = ($remotionStart + $removedFile.RemotionCountdown + $remotionEnd);
-						}
-						$newName = ($removedFile.BaseName + $version + $remotion + $removedFile.Extension)
-						echo ("RENAME: " + $removedFile.Path + "->" + $newName)
+					ForEach($removedKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
+						$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($removedKey);
+						$Null = $filesToRename.Add([PSCustomObject]@{
+							File = $removedFile;
+							NewName = $newName;
+							NewVersion = $unoccupiedVersionIndex;
+						});
 					}
-					$unoccupiedVersionIndex--
+					$unoccupiedVersionIndex--;
 				}
 			}
+			# Da lista, deleta arquivos
+			ForEach($fileToDelete In $filesToDelete) {
+				# Deleta arquivo
+		# Echo ("DELETE: " + $fileToDelete.Path);
+				# Deleta do fileMap
+				$fileBasePath = (Split-Path -Path $fileToDelete.Path -Parent);
+				$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($fileToDelete.BaseName + $fileToDelete.Extension));
+				$versionKey = $fileToDelete.VersionIndex;
+				$remotionKey = $fileToDelete.RemotionCountdown;
+				$modifiedFilesMap.Get($nameKey).Get($versionKey).Remove($remotionKey);
+			}
+			# Da lista, renomeia arquivos
+			ForEach($fileToRename In $filesToRename) {
+				$newVersion = $fileToRename.NewVersion;
+				$fileToRename = $fileToRename.File;
+				# Renomeia arquivo
+				$version = ($versionStart + $newVersion + $versionEnd);
+				$remotion = "";
+				If($fileToRename.RemotionCountdown -gt -1) {
+					$remotion = ($remotionStart + $fileToRename.RemotionCountdown + $remotionEnd);
+				}
+				$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
+		# Echo ("RENAME: " + $fileToRename.Path + " -> " + $newName);
+				# Renomeia do fileMap
+				$fileBasePath = (Split-Path -Path $fileToRename.Path -Parent);
+				$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($fileToRename.BaseName + $fileToRename.Extension));
+				$versionKey = $fileToRename.VersionIndex;
+				$remotionKey = $fileToRename.RemotionCountdown;
+				$modifiedFilesMap.Get($nameKey).Get($versionKey).Remove($remotionKey);
+				$modifiedFilesMap.Get($nameKey).Get($newVersion).Set($remotionKey, $fileToRename);
+				$fileToRename.Path = (Join-Path -Path $fileBasePath -ChildPath $newName);
+				$fileToRename.VersionIndex = $newVersion;
+			}
+			$modifiedFilesMap = (SortFileMap $modifiedFilesMap);
+			Return $modifiedFilesMap;
 		}
 		# Atualiza os arquivos-deletados presentes no $destPath
 		#   Todos que tiverem " _removedIn[0]" são deletados
@@ -114,7 +141,7 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 		# Ex.: Dest(F_r1(A), F_r4(B), F_r5(C), F_r8(Y), F_r9(Z))    --($remotionCountdown=5,$destructive)--> Dest(F_r0(A), F_r2(B), F_r3(C), F_r4(Y), F_r5(Z))
 		# Ex.: Dest(F_r1(A), F_r4(B), F_r5(C), F_r8(Y), F_r9(Z))    --($remotionCountdown=3,$destructive)--> Dest(F_r3(C), F_r4(Y), F_r5(Z))
 		# Ex.: Dest(F_v1_r2(A), F_v1_r9(Z), F_v2_r2(B), F_v2_r8(Y)) --($remotionCountdown=3,$destructive)--> Dest(F_v1_r1(A), F_v1_r3(Z), F_v2_r1(B), F_v2_r3(Y))
-		Function updateRemoved($destPath, $threads, $maxVersionLimit, $remotionCountdown, $destructive) {
+		Function UpdateRemoved($destPath, $threads, $maxVersionLimit, $remotionCountdown, $destructive) {
 			# Path do arquivo com a lista de arquivos-removidos do $destPath
 			$removedFilesList_FilePath = (Join-Path -Path $destPath -ChildPath "REMOVED")
 			# Lista arquivos-removidos em REMOVED
@@ -165,9 +192,9 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 			
 			
 		}
-	Function updateToModify($origPath, $destPath, $threads, $maxVersionLimit, $remotionCountdown, $destructive) {
-		updateToVersion $origPath $destPath $threads $maxVersionLimit $remotionCountdown $destructive
-		updateToRemove $origPath $destPath $threads $maxVersionLimit $remotionCountdown $destructive
+	Function UpdateToModify($origPath, $destPath, $threads, $maxVersionLimit, $remotionCountdown, $destructive) {
+		UpdateToVersion $origPath $destPath $threads $maxVersionLimit $remotionCountdown $destructive
+		UpdateToRemove $origPath $destPath $threads $maxVersionLimit $remotionCountdown $destructive
 	}
 		# Atualiza os arquivos-a-serem-sobrescritos com uma nova versão
 		#   Da lista de arquivos-modificados em $origPath, criar uma nova versão desta, com " _version[v]"
@@ -176,7 +203,7 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 		#       Este toma $maxVersionLimit, e o anterior toma $maxVersionLimit-1, etc
 		#       O que tiver " _version[0]" é deletado
 		#     Dessa forma, existem apenas versões de 1 até $maxVersionLimit
-		Function updateToVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotionCountdown, $destructive) {
+		Function UpdateToVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotionCountdown, $destructive) {
 			
 		}
 		# Atualiza os arquivos-a-serem-deletados com um novo removido
@@ -186,6 +213,6 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 		#       Ele recebe $remotionCountdown-1, e este recebe $remotionCountdown
 		#       Se houver mais, todos trocam de r até o -1 ser removido
 		#     Dessa forma, existem removidos apenas de $remotionCountdown até 0
-		Function updateToRemove($origPath, $destPath, $threads, $maxVersionLimit, $remotionCountdown, $destructive) {
+		Function UpdateToRemove($origPath, $destPath, $threads, $maxVersionLimit, $remotionCountdown, $destructive) {
 			
 		}
