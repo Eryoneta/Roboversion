@@ -88,7 +88,8 @@ Function Test_GetFileMap() {
 	Echo ("FUNCIONA: " + $sucess);
 }
 Function Test_UpdateVersioned() {
-	# Ex.: Dest(F_v1(A), F_v2(B), F_v3(C), F_v4(D), F_v5(E))              --($maxVersionLimit=3)--> Dest(F_v1(A), F_v2(B), F_v3(C), F_v4(D), F_v5(E))
+	# Dest(F_v1(A), F_v2(B), F_v3(C), F_v4(D), F_v5(E)) --($maxVersionLimit=3)--> Dest(F_v1(A), F_v2(B), F_v3(C), F_v4(D), F_v5(E))
+	Echo ("TEST: 'UpdateVersioned': Sem Destructive, não deve fazer nada");
 	$filePathList = "",
 		"C:\Folder\SubFolder\File _version[1].ext",
 		"C:\Folder\SubFolder\File _version[2].ext",
@@ -96,7 +97,7 @@ Function Test_UpdateVersioned() {
 		"C:\Folder\SubFolder\File _version[4].ext",
 		"C:\Folder\SubFolder\File _version[5].ext";
 	$orderedMap = GetFileMap $filePathList;
-	$orderedMap = UpdateVersioned $orderedMap 3 $False $True
+	$orderedMap = UpdateVersioned $orderedMap 3 $False $True;
 	# EchoFileMap $orderedMap;
 	$sucess = $True;
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(-1)) { $sucess = $False; }
@@ -105,7 +106,24 @@ Function Test_UpdateVersioned() {
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(4).Get(-1)) { $sucess = $False; }
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(5).Get(-1)) { $sucess = $False; }
 	Echo ("FUNCIONA: " + $sucess);
-	# Ex.: Dest(F_v1(A), F_v2(B), F_v3(C), F_v4(D), F_v5(E))              --($maxVersionLimit=3,$destructive)--> Dest(F_v1(C), F_v2(D), F_v3(E))
+	# Dest(F_v1(A), F_v2(B), F_v3(C), F_v4(D), F_v5(E)) --($maxVersionLimit=3,$destructive)--> Dest(F_v1(C), F_v2(D), F_v3(E))
+	Echo ("TEST: 'UpdateVersioned': Com Destructive, devem sobrar apenas 3 versões");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _version[1].ext",
+		"C:\Folder\SubFolder\File _version[2].ext",
+		"C:\Folder\SubFolder\File _version[3].ext",
+		"C:\Folder\SubFolder\File _version[4].ext",
+		"C:\Folder\SubFolder\File _version[5].ext";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateVersioned $orderedMap 3 $True $True;
+	EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(3).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(4).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(5).Get(-1)) { $sucess = $False; }
+	Echo ("FUNCIONA: " + $sucess);
 	# Ex.: Dest(F_v10(A), F_v12(B), F_v23(C))                             --($maxVersionLimit=3,$destructive)--> Dest(F_v1(A), F_v2(B), F_v3(C))
 	# Ex.: Dest(F_v1(A), F_v2(B))                                         --($maxVersionLimit=3,$destructive)--> Dest(F_v1(A), F_v2(B))
 	# Ex.: Dest(F_v1(A), F_v2(B), F_v27(Y), F_v34(Z))                     --($maxVersionLimit=5,$destructive)--> Dest(F_v1(A), F_v2(B), F_v4(Y), F_v5(Z))
