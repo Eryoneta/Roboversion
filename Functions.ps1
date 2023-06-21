@@ -71,15 +71,24 @@ Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 	#   /MIR = Espelhar
 	#   /XF = Ignorar arquivos(Os versionados, os removidos, os versionados e removidos)
 	#   /XD = Ignorar pastas(Os removidos)
-	$null = (Robocopy $orig $dest /MIR /SJ /SL /R:1 /W:0 /MT:$threads `
+	$Null = (Robocopy $origPath $destPath /MIR /SJ /SL /R:1 /W:0 /MT:$threads `
 		/XF `
 			$wildcardOfVersionedFile `
 			$wildcardOfRemovedFile `
 			$wildcardOfVersionedAndRemovedFile `
 		/XD `
 			$wildcardOfRemovedFolder `
-		/L /NJH /NJS /FP /NC /NS /NP /UNILOG:$toModifyFilesList_FilePath)
-	# INC
+		/L /NJH /NJS /FP /NC /NS /NP /UNILOG:$toModifyFilesList_FilePath);
+	# Carrega TO_MODIFY e o deleta
+	$toModifyFilesList_File = (Get-Content $toModifyFilesList_FilePath);
+	Remove-Item $toModifyFilesList_FilePath;
+	# Ordena lista de arquivos versionados e removidos
+	$toModifyFilesMap = GetFileMap $toModifyFilesList_File;
+	
+			EchoFileMap $toModifyFilesList; #QUEBRADO!
+	
+	# Retorna a lista
+	Return $toModifyFilesMap;
 }
 
 # Ordena arquivos com mesmo nome em grupos, agrupando os versionados e os removidos
@@ -107,8 +116,8 @@ Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 Function GetFileMap($filePathList) {
 	$allFilesMap = [FileMap]::new();
 	$regexOfBaseName = "(?<BaseName>.*?)";
-	$regexOfVersion = "(?:" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[0-9]+)" + [Regex]::Escape($versionEnd)) + ")?";
-	$regexOfRemotion = "(?:" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[0-9]+)" + [Regex]::Escape($remotionEnd)) + ")?";
+	$regexOfVersion = "(?:" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[-0-9]+)" + [Regex]::Escape($versionEnd)) + ")?";
+	$regexOfRemotion = "(?:" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[-0-9]+)" + [Regex]::Escape($remotionEnd)) + ")?";
 	$regexOfExtension = "(?<Extension>\.[^\.]*)?";
 	$regexOfFile = "^" + $regexOfBaseName + $regexOfVersion + $regexOfRemotion + $regexOfExtension + "$";
 	ForEach($filePath In $filePathList) {
@@ -150,13 +159,13 @@ Function GetFileMap($filePathList) {
 		}
 	}
 	# Ordena a lista
-	$sortedFileMap = (SortFileMap $allFilesMap);
+	$sortedFileMap = (GetSortedFileMap $allFilesMap);
 	# Retorna o resultado
 	Return $sortedFileMap;
 }
-Function SortFileMap($fileMap) {
+Function GetSortedFileMap($fileMap) {
 	$sortedFileMap = [FileMap]::new();
-	ForEach($nameKey In $fileMap.List()) {
+	ForEach($nameKey In @($fileMap.List())) {
 		ForEach($versionKey In ($fileMap.Get($nameKey).List() | Sort-Object -Descending)) {
 			ForEach($remotionKey In ($fileMap.Get($nameKey).Get($versionKey).List() | Sort-Object -Descending)) {
 				$fileItem = $fileMap.Get($nameKey).Get($versionKey).Get($remotionKey);
