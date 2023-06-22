@@ -116,8 +116,8 @@ Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 Function GetFileMap($filePathList) {
 	$allFilesMap = [FileMap]::new();
 	$regexOfBaseName = "(?<BaseName>.*?)";
-	$regexOfVersion = "(?:" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[-0-9]+)" + [Regex]::Escape($versionEnd)) + ")?";
-	$regexOfRemotion = "(?:" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[-0-9]+)" + [Regex]::Escape($remotionEnd)) + ")?";
+	$regexOfVersion = "(?:" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[0-9]+)" + [Regex]::Escape($versionEnd)) + ")?";
+	$regexOfRemotion = "(?:" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[0-9]+)" + [Regex]::Escape($remotionEnd)) + ")?";
 	$regexOfExtension = "(?<Extension>\.[^\.]*)?";
 	$regexOfFile = "^" + $regexOfBaseName + $regexOfVersion + $regexOfRemotion + $regexOfExtension + "$";
 	ForEach($filePath In $filePathList) {

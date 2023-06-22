@@ -6,15 +6,6 @@
 #   Se $destructive = $False:
 #     Nada ocorre. Os arquivos com index maior do que $maxVersionLimit não são afetados e ficam indefinitivamente
 Function UpdateVersioned($modifiedFilesMap, $maxVersionLimit, $destructive, $listOnly) {
-
-	$filePathList = "",
-		"C:\Folder\SubFolder\File _version[1].ext",
-		"C:\Folder\SubFolder\File _version[2].ext",
-		"C:\Folder\SubFolder\File _version[3].ext",
-		"C:\Folder\SubFolder\File _version[4].ext",
-		"C:\Folder\SubFolder\File _version[5].ext";
-	$modifiedFilesMap = GetFileMap $filePathList;
-
 	# Não-Destrutivo = Não faz nada
 	If(-Not $destructive) {
 		Return $modifiedFilesMap;
@@ -25,20 +16,12 @@ Function UpdateVersioned($modifiedFilesMap, $maxVersionLimit, $destructive, $lis
 	ForEach($nameKey In $modifiedFilesMap.List()) {
 		$unoccupiedVersionIndex = $maxVersionLimit;
 		ForEach($versionKey In $modifiedFilesMap.Get($nameKey).List()) {
-			# Sem VersionIndex livres, então deletar
-			If($unoccupiedVersionIndex -lt 1) {
-				ForEach($removedKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
-					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($removedKey);
-					$Null = $filesToDelete.Add($removedFile);
-				}
-				Continue;
-			}
 			# VersionIndex iguais a -1 são ignorados(São os sem versão)
 			If($versionKey -eq -1) {
 				Continue;
 			}
-			# VersionIndex menores que 1 são ilegais(Menos o -1)
-			If($versionKey -lt 1) {
+			# Sem VersionIndex livres, então deletar
+			If($unoccupiedVersionIndex -lt 1) {
 				ForEach($removedKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
 					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($removedKey);
 					$Null = $filesToDelete.Add($removedFile);
@@ -77,7 +60,7 @@ Function UpdateVersioned($modifiedFilesMap, $maxVersionLimit, $destructive, $lis
 		$modifiedFilesMap.Get($nameKey).Get($versionKey).Remove($remotionKey);
 	}
 	# Da lista, renomeia arquivos
-	ForEach($fileToRename In $filesToRename) {
+	ForEach($fileToRename In $filesToRename | Sort-Object -Property NewVersion) {
 		$newVersion = $fileToRename.NewVersion;
 		$fileToRename = $fileToRename.File;
 		# Renomeia arquivo
@@ -103,8 +86,5 @@ Function UpdateVersioned($modifiedFilesMap, $maxVersionLimit, $destructive, $lis
 		$fileToRename.VersionIndex = $newVersion;
 	}
 	$modifiedFilesMap = (GetSortedFileMap $modifiedFilesMap);
-
-	EchoFileMap $modifiedFilesMap;
-
 	Return $modifiedFilesMap;
 }

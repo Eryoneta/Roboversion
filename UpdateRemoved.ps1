@@ -21,11 +21,6 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 					If($removedKey -eq -1) {
 						Continue;
 					}
-					# RemotionCountdown menores que 0 são ilegais(Menos o -1)
-					If($removedKey -lt 0) {
-						$Null = $filesToDelete.Add($removedFile);
-						Continue;
-					}
 					# RemotionCountdown iguais a 0 são deletados
 					If($removedKey -eq 0) {
 						$Null = $filesToDelete.Add($removedFile);
@@ -100,7 +95,7 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 		$modifiedFilesMap.Get($nameKey).Get($versionKey).Remove($remotionKey);
 	}
 	# Da lista, renomeia arquivos
-	ForEach($fileToRename In $filesToRename) {
+	ForEach($fileToRename In $filesToRename | Sort-Object -Property NewRemotionCountdown) {
 		$newRemotionCountdown = $fileToRename.NewRemotionCountdown;
 		$fileToRename = $fileToRename.File;
 		# Renomeia arquivo
