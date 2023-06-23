@@ -258,7 +258,7 @@ Function Test_UpdateVersioned() {
 		"";
 	$orderedMap = GetFileMap $filePathList;
 	$orderedMap = UpdateVersioned $orderedMap 3 $True $True;
-	EchoFileMap $orderedMap;
+	# EchoFileMap $orderedMap;
 	$sucess = $True;
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(-1)) { $sucess = $False; }
@@ -283,7 +283,7 @@ Function Test_UpdateVersioned() {
 		"";
 	$orderedMap = GetFileMap $filePathList;
 	$orderedMap = UpdateVersioned $orderedMap 3 $True $True;
-	EchoFileMap $orderedMap;
+	# EchoFileMap $orderedMap;
 	$sucess = $True;
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File _version[-3].ext").Get(-1).Get(-1)) { $sucess = $False; }
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File _version[-2].ext").Get(-1).Get(-1)) { $sucess = $False; }
@@ -294,17 +294,177 @@ Function Test_UpdateVersioned() {
 	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-2).Get(-1)) { $sucess = $False; }
 	Echo ("FUNCIONA: " + $sucess);
 	Echo ("");
+	# Dest(F1_v4(A), F1_v5(B), F2_v4(1), F2_v5(2)) --($maxVersionLimit=3,$destructive)--> Dest(F1_v2(A), F1_v3(B), F2_v2(1), F2_v3(2))
+	Echo ("TEST: 'UpdateVersioned /V=3 /D /L': Com Destructive, não deve haver conflito entre versões de diferentes arquivos");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File1 _version[4].ext",
+		"C:\Folder\SubFolder\File1 _version[5].ext",
+		"C:\Folder\SubFolder\File2 _version[4].ext",
+		"C:\Folder\SubFolder\File2 _version[5].ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateVersioned $orderedMap 3 $True $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File1.ext").Get(2).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File1.ext").Get(3).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File2.ext").Get(2).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File2.ext").Get(3).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File1.ext").Get(4).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File1.ext").Get(5).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File2.ext").Get(4).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File2.ext").Get(5).Get(-1)) { $sucess = $False; }
+	Echo ("FUNCIONA: " + $sucess);
+	Echo ("");
 }
 Function Test_UpdateRemoved() {
-	# Dest(F_r0(A), F_r1(B), F_r3(C), F_r5(D))             --($remotionCountdown=5)-->              Dest(F_r0(B), F_r2(C), F_r4(D))
-	# Dest(F_r1(A), F_r8(Y), F_r9(Z))                      --($remotionCountdown=5)-->              Dest(F_r0(A), F_r7(Y), F_r8(Z))
-	# Dest(F_r1(A), F_r8(Y), F_r9(Z))                      --($remotionCountdown=5,$destructive)--> Dest(F_r0(A), F_r4(Y), F_r5(Z))
-	# Dest(F_r1(A), F_r4(B), F_r5(C), F_r8(Y), F_r9(Z))    --($remotionCountdown=5,$destructive)--> Dest(F_r0(A), F_r2(B), F_r3(C), F_r4(Y), F_r5(Z))
-	# Dest(F_r1(A), F_r4(B), F_r5(C), F_r8(Y), F_r9(Z))    --($remotionCountdown=3,$destructive)--> Dest(F_r3(C), F_r4(Y), F_r5(Z))
-	# Dest(F_v1_r2(A), F_v1_r9(Z), F_v2_r2(B), F_v2_r8(Y)) --($remotionCountdown=3,$destructive)--> Dest(F_v1_r1(A), F_v1_r3(Z), F_v2_r1(B), F_v2_r3(Y))
+	# Dest(F_r0(A), F_r1(B), F_r3(C), F_r5(D)) --($remotionCountdown=3)--> Dest(F_r0(B), F_r2(C), F_r4(D))
+	Echo ("TEST: 'UpdateRemoved /R=3 /L': Sem Destructive, deve apenas diminuir o countdown");
+	Echo ("(O r0 é deletado e todos os outros recebem countdown - 1)");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _removeIn[0].ext",
+		"C:\Folder\SubFolder\File _removeIn[1].ext",
+		"C:\Folder\SubFolder\File _removeIn[3].ext",
+		"C:\Folder\SubFolder\File _removeIn[5].ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateRemoved $orderedMap 3 $False $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(0)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(2)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(4)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(3)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(5)) { $sucess = $False; }
+	Echo ("FUNCIONA: " + $sucess);
+	Echo ("");
+	# Dest(F_r1(A), F_r8(Y), F_r9(Z)) --($remotionCountdown=3,$destructive)--> Dest(F_r0(A), F_r4(Y), F_r5(Z))
+	Echo ("TEST: 'UpdateRemoved /R=3 /D /L': Com Destructive, os maiores que 3 devem ser diminuidos");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _removeIn[1].ext",
+		"C:\Folder\SubFolder\File _removeIn[8].ext",
+		"C:\Folder\SubFolder\File _removeIn[9].ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateRemoved $orderedMap 3 $True $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(0)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(2)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(3)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(8)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(9)) { $sucess = $False; }
+	Echo ("FUNCIONA: " + $sucess);
+	Echo ("");
+	# Dest(F_r3(Y),F_r4(Z)) --($remotionCountdown=3,$destructive)--> Dest(F_r2(Y), F_r3(Z))
+	Echo ("TEST: 'UpdateRemoved /R=3 /D /L': Com Destructive, o 3 deve ser diminuido normalmente");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _removeIn[3].ext",
+		"C:\Folder\SubFolder\File _removeIn[4].ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateRemoved $orderedMap 3 $True $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(2)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(3)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(4)) { $sucess = $False; }
+	Echo ("FUNCIONA: " + $sucess);
+	Echo ("");
+	# Dest(F_r1(A), F_r4(W), F_r5(X), F_r8(Y), F_r9(Z)) --($remotionCountdown=3,$destructive)--> Dest(F_r0(W), F_r1(X), F_r2(Y), F_r3(Z))
+	Echo ("TEST: 'UpdateRemoved /R=3 /D /L': Com Destructive, os maiores que 3 devem ser diminuidos, apagando os menores");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _removeIn[1].ext",
+		"C:\Folder\SubFolder\File _removeIn[4].ext",
+		"C:\Folder\SubFolder\File _removeIn[5].ext",
+		"C:\Folder\SubFolder\File _removeIn[8].ext",
+		"C:\Folder\SubFolder\File _removeIn[9].ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateRemoved $orderedMap 3 $True $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(0)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(2)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(3)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(4)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(5)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(8)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(9)) { $sucess = $False; }
+	Echo ("FUNCIONA: " + $sucess);
+	Echo ("");
+	# Dest(F_v1_r2(A), F_v1_r9(Z), F_v2_r2(1), F_v2_r9(10)) --($remotionCountdown=3,$destructive)--> Dest(F_v1_r1(A), F_v1_r3(Z), F_v2_r1(1), F_v2_r3(10))
+	Echo ("TEST: 'UpdateRemoved /R=3 /D /L': Com Destructive, as diferentes versões não devem entrar em conflito");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _version[1] _removeIn[2].ext",
+		"C:\Folder\SubFolder\File _version[1] _removeIn[9].ext",
+		"C:\Folder\SubFolder\File _version[2] _removeIn[2].ext",
+		"C:\Folder\SubFolder\File _version[2] _removeIn[9].ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateRemoved $orderedMap 3 $True $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(3)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(3)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(2)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(9)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(2)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(9)) { $sucess = $False; }
+	Echo ("FUNCIONA: " + $sucess);
+	Echo ("");
 }
 Function Test_UpdateModified() {
-	#TODO
+	# Dest(F_v1_r2(A), F_v1_r9(Z), F_v2_r2(1), F_v2_r9(10)) --($maxVersionLimit=3,$remotionCountdown=5,$destructive)--> Dest(F_v1_r1(A), F_v1_r8(Z), F_v2_r1(1), F_v2_r8(10))
+	Echo ("TEST: 'UpdateModified /V=3 /R=5 /L': Sem Destructive, as diferentes versões não devem entrar em conflito");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _version[1] _removeIn[2].ext",
+		"C:\Folder\SubFolder\File _version[1] _removeIn[9].ext",
+		"C:\Folder\SubFolder\File _version[2] _removeIn[2].ext",
+		"C:\Folder\SubFolder\File _version[2] _removeIn[9].ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateModified $orderedMap 3 5 $False $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(8)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(8)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(2)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(9)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(2)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(9)) { $sucess = $False; }
+	Echo ("FUNCIONA: " + $sucess);
+	Echo ("");
+	# Dest(F_v1_r2(A), F_v1_r9(Z), F_v6_r2(1), F_v6_r9(10)) --($maxVersionLimit=3,$remotionCountdown=5,$destructive)--> Dest(F_v1_r1(A), F_v1_r5(Z), F_v3_r1(1), F_v3_r5(10))
+	Echo ("TEST: 'UpdateModified /V=3 /R=5 /D /L': Com Destructive, as diferentes versões não devem entrar em conflito");
+	Echo ("(Os v6 se tornam v3, e os r9 se tornam r5)");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _version[1] _removeIn[2].ext",
+		"C:\Folder\SubFolder\File _version[1] _removeIn[9].ext",
+		"C:\Folder\SubFolder\File _version[6] _removeIn[2].ext",
+		"C:\Folder\SubFolder\File _version[6] _removeIn[9].ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateModified $orderedMap 3 5 $True $True;
+	EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(5)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(3).Get(1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(3).Get(5)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(2)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(9)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(6).Get(2)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(6).Get(9)) { $sucess = $False; }
+	Echo ("FUNCIONA: " + $sucess);
+	Echo ("");
 }
 Function Test_UpdateToVersion() {
 	#TODO

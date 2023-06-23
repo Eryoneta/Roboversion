@@ -31,19 +31,20 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 	Echo "============";
 	
 	# Atualiza os arquivos versionados e removidos em $destPath
-	$modifiedFilesMap = (UpdateModified $modifiedFilesMap $maxVersionLimit $remotionCountdown $destructive);
+	$modifiedFilesMap = (UpdateModified $modifiedFilesMap $maxVersionLimit $remotionCountdown $destructive $listOnly);
 	Echo "============ARQUIVOS MODIFICADOS APÓS UPDATE: ";
 	EchoFileMap $modifiedFilesMap;
 	Echo "============";
 	
 	# Lista os arquivos a versionar ou remover
-	$toModifyFilesList = (GetToModifyFilesMap $origPath $destPath $threads);
+	$toModifyFilesMap = (GetToModifyFilesMap $origPath $destPath $threads);
 	Echo "============ARQUIVOS A MODIFICAR: ";
-	EchoFileMap $toModifyFilesList;
+	EchoFileMap $toModifyFilesMap;
 	Echo "============";
 	
 	# Atualiza os arquivos a versionar ou remover em $destPath
-	# updateToModify $modifiedFilesMap $toModifyFilesList $maxVersionLimit $remotionCountdown $destructive;
+	$modifiedFilesMap = (UpdateToModify $modifiedFilesMap $toModifyFilesMap $maxVersionLimit $remotionCountdown $destructive $listOnly);
+
 	# Realiza a cópia
 	# Robocopy $origPath $destPath;
 }
@@ -52,7 +53,8 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 		$modifiedFilesMap = (UpdateRemoved $modifiedFilesMap $remotionCountdown $destructive $listOnly);
 		Return $modifiedFilesMap;
 	}
-	Function UpdateToModify($origPath, $destPath, $threads, $maxVersionLimit, $remotionCountdown, $destructive, $listOnly) {
-		UpdateToVersion $origPath $destPath $threads $maxVersionLimit $remotionCountdown $destructive $listOnly
-		UpdateToRemove $origPath $destPath $threads $maxVersionLimit $remotionCountdown $destructive $listOnly
+	Function UpdateToModify($modifiedFilesMap, $toModifyFilesMap, $maxVersionLimit, $remotionCountdown, $destructive, $listOnly) {
+		$modifiedFilesMap = (UpdateToVersion $modifiedFilesMap $toModifyFilesMap $maxVersionLimit $destructive $listOnly);
+		$modifiedFilesMap = (UpdateToRemove $modifiedFilesMap $toModifyFilesMap $remotionCountdown $destructive $listOnly);
+		Return $modifiedFilesMap;
 	}

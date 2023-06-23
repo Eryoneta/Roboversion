@@ -29,7 +29,7 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 					# Renomear com RemotionCountdown - 1
 					$Null = $filesToRename.Add([PSCustomObject]@{
 						File = $removedFile;
-						NewRemotionCountdown = ($removedFile.RemotionCountdown - 1);
+						NewRemotionCountdown = ($removedKey - 1);
 					});
 				}
 			}
@@ -43,11 +43,6 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($removedKey);
 					# RemotionCountdown iguais a -1 são ignorados(São os sem remoção)
 					If($removedKey -eq -1) {
-						Continue;
-					}
-					# RemotionCountdown menores que 0 são ilegais(Menos o -1)
-					If($removedKey -lt 0) {
-						$Null = $filesToDelete.Add($removedFile);
 						Continue;
 					}
 					# RemotionCountdown iguais a 0 são deletados
@@ -64,9 +59,9 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 					If($removedKey -le $unoccupiedRemotionCountdown) {
 						$Null = $filesToRename.Add([PSCustomObject]@{
 							File = $removedFile;
-							NewRemotionCountdown = ($removedFile.RemotionCountdown - 1);
+							NewRemotionCountdown = ($removedKey - 1);
 						});
-						$unoccupiedRemotionCountdown = $removedKey;
+						$unoccupiedRemotionCountdown = ($removedKey - 1);
 						Continue;
 					}
 					# Renomear com RemotionCountdown livre

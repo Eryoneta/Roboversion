@@ -5,6 +5,6 @@
 #       Este toma $maxVersionLimit, e o anterior toma $maxVersionLimit-1, etc
 #       O que tiver " _version[0]" é deletado
 #     Dessa forma, existem apenas versões de 1 até $maxVersionLimit
-Function UpdateToVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotionCountdown, $destructive, $listOnly) {
+Function UpdateToVersion($modifiedFilesMap, $toModifyFilesMap, $maxVersionLimit, $destructive, $listOnly) {
 	
 }

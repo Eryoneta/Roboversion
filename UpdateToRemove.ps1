@@ -5,6 +5,6 @@
 #       Ele recebe $remotionCountdown-1, e este recebe $remotionCountdown
 #       Se houver mais, todos trocam de r até o -1 ser removido
 #     Dessa forma, existem removidos apenas de $remotionCountdown até 0
-Function UpdateToRemove($origPath, $destPath, $threads, $maxVersionLimit, $remotionCountdown, $destructive, $listOnly) {
+Function UpdateToRemove($modifiedFilesMap, $toModifyFilesMap, $remotionCountdown, $destructive, $listOnly) {
 	
 }
