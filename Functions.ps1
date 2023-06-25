@@ -14,10 +14,10 @@
 #   /UNILOG = Exportar lista a um arquivo UNICODE(Inclui caracteres especiais)
 
 # Padrão do nome de arquivos versionados
-$versionStart = " _version[";
+$versionStart = "_version[";
 $versionEnd = "]";
 # Padrão do nome de arquivos removidos
-$remotionStart = " _removeIn[";
+$remotionStart = "_removeIn[";
 $remotionEnd = "]";
 
 # Wildcard para ignorar arquivos versionados e removidos
@@ -84,9 +84,6 @@ Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 	Remove-Item $toModifyFilesList_FilePath;
 	# Ordena lista de arquivos versionados e removidos
 	$toModifyFilesMap = GetFileMap $toModifyFilesList_File;
-	
-			EchoFileMap $toModifyFilesList; #QUEBRADO!
-	
 	# Retorna a lista
 	Return $toModifyFilesMap;
 }
@@ -116,8 +113,8 @@ Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 Function GetFileMap($filePathList) {
 	$allFilesMap = [FileMap]::new();
 	$regexOfBaseName = "(?<BaseName>.*?)";
-	$regexOfVersion = "(?:" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[0-9]+)" + [Regex]::Escape($versionEnd)) + ")?";
-	$regexOfRemotion = "(?:" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[0-9]+)" + [Regex]::Escape($remotionEnd)) + ")?";
+	$regexOfVersion = "(?: ?" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[0-9]+)" + [Regex]::Escape($versionEnd)) + ")?";
+	$regexOfRemotion = "(?: ?" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[0-9]+)" + [Regex]::Escape($remotionEnd)) + ")?";
 	$regexOfExtension = "(?<Extension>\.[^\.]*)?";
 	$regexOfFile = "^" + $regexOfBaseName + $regexOfVersion + $regexOfRemotion + $regexOfExtension + "$";
 	ForEach($filePath In $filePathList) {

@@ -96,9 +96,9 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 		# Renomeia arquivo
 		$version = "";
 		If($fileToRename.VersionIndex -gt 0) {
-			$version = ($versionStart + $fileToRename.VersionIndex + $versionEnd);
+			$version = (" " + $versionStart + $fileToRename.VersionIndex + $versionEnd);
 		}
-		$remotion = ($remotionStart + $newRemotionCountdown + $remotionEnd);
+		$remotion = (" " + $remotionStart + $newRemotionCountdown + $remotionEnd);
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
 		If($listOnly) {
 			Write-Information -MessageData ("RENAME: " + $fileToRename.Path + " -> " + $newName) -InformationAction Continue;

@@ -64,10 +64,10 @@ Function UpdateVersioned($modifiedFilesMap, $maxVersionLimit, $destructive, $lis
 		$newVersion = $fileToRename.NewVersion;
 		$fileToRename = $fileToRename.File;
 		# Renomeia arquivo
-		$version = ($versionStart + $newVersion + $versionEnd);
+		$version = (" " + $versionStart + $newVersion + $versionEnd);
 		$remotion = "";
 		If($fileToRename.RemotionCountdown -gt -1) {
-			$remotion = ($remotionStart + $fileToRename.RemotionCountdown + $remotionEnd);
+			$remotion = (" " + $remotionStart + $fileToRename.RemotionCountdown + $remotionEnd);
 		}
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
 		If($listOnly) {

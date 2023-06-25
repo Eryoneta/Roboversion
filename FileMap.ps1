@@ -21,6 +21,10 @@ Class FileMap {
 	[object] List() {
 		Return $this.nameMap.List();
 	}
+	# CONTAINS
+	[boolean] Contains($nameKey) {
+		Return $this.nameMap.Contains($nameKey);
+	}
 }
 	Class NameMap {
 		[FileMap] $fileMap;
@@ -34,7 +38,10 @@ Class FileMap {
 		[void] CheckMap($nameKey) {
 			If(-Not $this.fileMap.hashMap.Contains($nameKey)) {
 				$this.fileMap.hashMap[[object]$nameKey] = [ordered]@{};
-			} ElseIf($this.fileMap.hashMap[[object]$nameKey].Count -eq 0) {
+			}
+		}
+		[void] ClearRemoved($nameKey) {
+			If($this.fileMap.hashMap[[object]$nameKey].Count -eq 0) {
 				$this.fileMap.hashMap.Remove([object]$nameKey);
 			}
 		}
@@ -53,6 +60,15 @@ Class FileMap {
 		[object] List() {
 			Return $this.fileMap.hashMap.Keys;
 		}
+		# CONTAINS
+		[boolean] Contains($nameKey) {
+			If($this.fileMap.hashMap.Contains($nameKey)) {
+				If($this.fileMap.hashMap[[object]$nameKey].Count -gt 0) {
+					Return $True;
+				}
+			}
+			Return $False;
+		}
 	}
 		Class VersionMap {
 			[NameMap] $nameMap;
@@ -67,9 +83,14 @@ Class FileMap {
 				$nameKey = $this.nameMap.currentKey;
 				If(-Not $this.nameMap.fileMap.hashMap[[object]$nameKey].Contains($versionKey)) {
 					$this.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey] = [ordered]@{};
-				} ElseIf($this.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey].Count -eq 0) {
+				}
+			}
+			[void] ClearRemoved($versionKey) {
+				$nameKey = $this.nameMap.currentKey;
+				If($this.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey].Count -eq 0) {
 					$this.nameMap.fileMap.hashMap[[object]$nameKey].Remove([object]$versionKey);
 				}
+				$this.nameMap.ClearRemoved($nameKey);
 			}
 			# GET
 			[RemotionMap] Get($versionKey) {
@@ -82,12 +103,22 @@ Class FileMap {
 				$nameKey = $this.nameMap.currentKey;
 				$this.currentKey = $versionKey;
 				$this.nameMap.fileMap.hashMap[[object]$nameKey].Remove([object]$versionKey);
-				$this.nameMap.CheckMap($nameKey);
+				$this.nameMap.ClearRemoved($nameKey);
 			}
 			# LIST
 			[object] List() {
 				$nameKey = $this.nameMap.currentKey;
 				Return $this.nameMap.fileMap.hashMap[[object]$nameKey].Keys;
+			}
+			# CONTAINS
+			[boolean] Contains($versionKey) {
+				$nameKey = $this.nameMap.currentKey;
+				If($this.nameMap.fileMap.hashMap[[object]$nameKey].Contains($versionKey)) {
+					If($this.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey].Count -gt 0) {
+						Return $True;
+					}
+				}
+				Return $False;
 			}
 		}
 			Class RemotionMap {
@@ -125,12 +156,23 @@ Class FileMap {
 					$versionKey = $this.versionMap.currentKey;
 					$this.currentKey = $remotionKey;
 					$this.versionMap.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey].Remove([object]$remotionKey);
-					$this.versionMap.CheckMap($versionKey);
+					$this.versionMap.ClearRemoved($versionKey);
 				}
 				# LIST
 				[object] List() {
 					$nameKey = $this.versionMap.nameMap.currentKey;
 					$versionKey = $this.versionMap.currentKey;
 					Return $this.versionMap.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey].Keys;
+				}
+				# CONTAINS
+				[boolean] Contains($remotionKey) {
+					$nameKey = $this.versionMap.nameMap.currentKey;
+					$versionKey = $this.versionMap.currentKey;
+					If($this.versionMap.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey].Contains($remotionKey)) {
+						If($this.versionMap.nameMap.fileMap.hashMap[[object]$nameKey][[object]$versionKey][[object]$remotionKey]) {
+							Return $True;
+						}
+					}
+					Return $False;
 				}
 			}
