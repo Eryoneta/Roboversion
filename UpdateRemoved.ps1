@@ -57,11 +57,12 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 					}
 					# RemotionCountdown menores que $remotionCountdown são renomeados com RemotionCountdown - 1
 					If($removedKey -le $unoccupiedRemotionCountdown) {
+						$unoccupiedRemotionCountdown = $removedKey;
 						$Null = $filesToRename.Add([PSCustomObject]@{
 							File = $removedFile;
-							NewRemotionCountdown = ($removedKey - 1);
+							NewRemotionCountdown = ($unoccupiedRemotionCountdown - 1);
 						});
-						$unoccupiedRemotionCountdown = ($removedKey - 1);
+						$unoccupiedRemotionCountdown--;
 						Continue;
 					}
 					# Renomear com RemotionCountdown livre

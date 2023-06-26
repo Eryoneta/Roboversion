@@ -602,8 +602,94 @@ Function Test_UpdateToVersion() {
 	Echo ("");
 }
 Function Test_UpdateToRemove() {
-	#TODO
+	Echo ('TEST: Orig()->Dest(F_v3(3), F(4)) --($remotionCountdown=3)--> Dest(F_v3_r3(3), F_r3(4), F(4))');
+	Echo ("'UpdateToRemove /R=3 /L': Deve criar uma nova remoção 3, renomeando todas as versões e copiando o arquivo");
+	Echo ("(v3 se torna v3_r3 e F é copiado para r3)");
+	$filePathListToModify = "",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _version[3].ext",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateToRemove $orderedMap $orderedMapToModify 3 $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(3)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(3).Get(3)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(3).Get(-1)) { $sucess = $False; }
+	Echo ("FUNCIONA: " + $sucess);
+	Echo ("");
+	Echo ("");
+	Echo ("");
+	Echo ('TEST: Orig()->Dest(F_v3_r2(3), F_r2(4), F(5)) --($remotionCountdown=3)--> Dest(F_v3_r2(3), F_r2(4), F_r3(5), F(5))');
+	Echo ("'UpdateToRemove /R=3 /L': Deve criar uma nova remoção 3, sem afetar os outros removidos");
+	$filePathListToModify = "",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _version[3] _removeIn[2].ext",
+		"C:\Folder\SubFolder\File _removeIn[2].ext",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateToRemove $orderedMap $orderedMapToModify 3 $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(3).Get(2)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(2)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(3)) { $sucess = $False; }
+	Echo ("FUNCIONA: " + $sucess);
+	Echo ("");
+	Echo ("");
+	Echo ("");
+	Echo ('TEST: Orig()->Dest(F_v3_r3(3), F_r3(4), F(5)) --($remotionCountdown=3)--> Dest(F_v3_r2(3), F_r2(4), F_r3(5), F(5))');
+	Echo ("'UpdateToRemove /R=3 /L': Deve criar uma nova remoção 3, e renomear os outros para remoção 2, se tiverem remoção 3");
+	$filePathListToModify = "",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _version[3] _removeIn[3].ext",
+		"C:\Folder\SubFolder\File _removeIn[3].ext",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateToRemove $orderedMap $orderedMapToModify 3 $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(3).Get(2)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(2)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(3)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(3).Get(3)) { $sucess = $False; }
+	Echo ("FUNCIONA: " + $sucess);
+	Echo ("");
+	Echo ("");
+	Echo ("");
 }
 Function Test_UpdateToModify() {
 	#TODO
+}
+Function Test_Update() {
+	#TODO
+}
+Function Test_All() {
+	# Básico
+	Test_GetFileMap;
+	# Update dos arquivos versionados
+	Test_UpdateVersioned;
+	Test_UpdateRemoved;
+	Test_UpdateModified;
+	# Update com os arquivos modificados
+	Test_UpdateToVersion;
+	Test_UpdateToRemove;
+	Test_UpdateToModify;
+	# Update de todos os arquivos
+	Test_Update;
 }

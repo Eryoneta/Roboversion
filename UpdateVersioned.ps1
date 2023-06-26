@@ -31,6 +31,7 @@ Function UpdateVersioned($modifiedFilesMap, $maxVersionLimit, $destructive, $lis
 			# VersionIndex menores que $maxVersionLimit devem permanecer assim
 			If($versionKey -le $unoccupiedVersionIndex) {
 				$unoccupiedVersionIndex = $versionKey;
+				$unoccupiedVersionIndex--;
 				Continue;
 			}
 			# Renomear com VersionIndex livre

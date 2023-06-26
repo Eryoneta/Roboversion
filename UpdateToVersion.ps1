@@ -70,6 +70,7 @@ Function UpdateToVersion($modifiedFilesMap, $toModifyFilesMap, $maxVersionLimit,
 					# VersionIndex menores que $maxVersionLimit devem permanecer assim
 					If($versionKey -le $unoccupiedVersionIndex) {
 						$unoccupiedVersionIndex = $versionKey;
+						$unoccupiedVersionIndex--;
 						Continue;
 					}
 					# Renomear com VersionIndex livre
@@ -136,7 +137,7 @@ Function UpdateToVersion($modifiedFilesMap, $toModifyFilesMap, $maxVersionLimit,
 		$fileToRename.VersionIndex = $newVersion;
 	}
 	# Da lista, copia arquivos
-	ForEach($fileToCopy In $filesToCopy | Sort-Object -Property NewVersion) {
+	ForEach($fileToCopy In $filesToCopy) {
 		$newVersion = $fileToCopy.NewVersion;
 		$fileToCopy = $fileToCopy.File;
 		# Copia arquivo
@@ -155,9 +156,9 @@ Function UpdateToVersion($modifiedFilesMap, $toModifyFilesMap, $maxVersionLimit,
 		}
 		# Copia no fileMap
 		$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($fileToCopy.BaseName + $fileToCopy.Extension));
-		$versionKey = $fileToCopy.VersionIndex;
+		$versionKey = $newVersion;
 		$remotionKey = $fileToCopy.RemotionCountdown;
-		$modifiedFilesMap.Get($nameKey).Get($newVersion).Set($remotionKey, ([PSCustomObject]@{
+		$modifiedFilesMap.Get($nameKey).Get($versionKey).Set($remotionKey, ([PSCustomObject]@{
 			Path = $newPath;
 			BaseName = $fileToCopy.BaseName;
 			VersionIndex = $newVersion;
