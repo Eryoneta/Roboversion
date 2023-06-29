@@ -76,46 +76,10 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 		}
 	}
 	# Da lista, deleta arquivos
-	ForEach($fileToDelete In $filesToDelete) {
-		# Deleta arquivo
-		If($listOnly) {
-			Write-Information -MessageData ("DELETE: " + $fileToDelete.Path) -InformationAction Continue;
-		} Else {
-			# TODO
-		}
-		# Deleta do fileMap
-		$fileBasePath = (Split-Path -Path $fileToDelete.Path -Parent);
-		$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($fileToDelete.BaseName + $fileToDelete.Extension));
-		$versionKey = $fileToDelete.VersionIndex;
-		$remotionKey = $fileToDelete.RemotionCountdown;
-		$modifiedFilesMap.Get($nameKey).Get($versionKey).Remove($remotionKey);
-	}
+	DeleteFilesList $modifiedFilesMap $filesToDelete $listOnly;
 	# Da lista, renomeia arquivos
-	ForEach($fileToRename In $filesToRename | Sort-Object -Property NewRemotionCountdown) {
-		$newRemotionCountdown = $fileToRename.NewRemotionCountdown;
-		$fileToRename = $fileToRename.File;
-		# Renomeia arquivo
-		$version = "";
-		If($fileToRename.VersionIndex -gt 0) {
-			$version = (" " + $versionStart + $fileToRename.VersionIndex + $versionEnd);
-		}
-		$remotion = (" " + $remotionStart + $newRemotionCountdown + $remotionEnd);
-		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
-		If($listOnly) {
-			Write-Information -MessageData ("RENAME: " + $fileToRename.Path + " -> " + $newName) -InformationAction Continue;
-		} Else {
-			# TODO
-		}
-		# Renomeia do fileMap
-		$fileBasePath = (Split-Path -Path $fileToRename.Path -Parent);
-		$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($fileToRename.BaseName + $fileToRename.Extension));
-		$versionKey = $fileToRename.VersionIndex;
-		$remotionKey = $fileToRename.RemotionCountdown;
-		$modifiedFilesMap.Get($nameKey).Get($versionKey).Remove($remotionKey);
-		$modifiedFilesMap.Get($nameKey).Get($versionKey).Set($newRemotionCountdown, $fileToRename);
-		$fileToRename.Path = (Join-Path -Path $fileBasePath -ChildPath $newName);
-		$fileToRename.RemotionCountdown = $newRemotionCountdown;
-	}
+	RenameRemovedFilesList $modifiedFilesMap $filesToRename $listOnly;
+	# Retorna mapa ordenado
 	$modifiedFilesMap = (GetSortedFileMap $modifiedFilesMap);
 	Return $modifiedFilesMap;
 }
