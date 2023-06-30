@@ -61,7 +61,6 @@ Function UpdateToRemove($modifiedFilesMap, $toModifyFilesMap, $remotionCountdown
 		# Checar se não existe outro com mesmo RemotionCountdown
 		$fileBasePath = (Split-Path -Path $file.Path -Parent);
 		$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($file.BaseName + $file.Extension));
-		$versionKey = $file.VersionIndex;
 		$remotionKey = $newRemotionCountdown;
 		If($modifiedFilesMap.Contains($nameKey)) {
 			# Todas as versões são checadas

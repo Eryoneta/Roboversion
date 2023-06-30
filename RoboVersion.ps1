@@ -1,5 +1,6 @@
 ﻿. "./FileMap.ps1";
 . "./Functions.ps1";
+. "./FileManager.ps1";
 . "./UpdateVersioned.ps1";
 . "./UpdateRemoved.ps1";
 . "./UpdateToVersion.ps1";
@@ -16,6 +17,7 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 	$listOnly=$True;
 	. "./FileMap.ps1";
 	. "./Functions.ps1";
+	. "./FileManager.ps1";
 	. "./UpdateVersioned.ps1";
 	. "./UpdateRemoved.ps1";
 	. "./UpdateToVersion.ps1";
@@ -26,27 +28,37 @@ Function RoboVersion($origPath, $destPath, $threads, $maxVersionLimit, $remotion
 	# Lista os arquivos versionados e removidos
 	$modifiedFilesMap = (GetModifiedFilesMap $destPath $threads);
 	
-	Echo "============ARQUIVOS MODIFICADOS: ";
+	Echo "============ ARQUIVOS MODIFICADOS: ";
 	EchoFileMap $modifiedFilesMap;
 	Echo "============";
 	
 	# Atualiza os arquivos versionados e removidos em $destPath
 	$modifiedFilesMap = (UpdateModified $modifiedFilesMap $maxVersionLimit $remotionCountdown $destructive $listOnly);
-	Echo "============ARQUIVOS MODIFICADOS APÓS UPDATE: ";
+	Echo "============ ARQUIVOS MODIFICADOS APÓS UPDATE: ";
 	EchoFileMap $modifiedFilesMap;
 	Echo "============";
 	
 	# Lista os arquivos a versionar ou remover
 	$toModifyFilesMap = (GetToModifyFilesMap $origPath $destPath $threads);
-	Echo "============ARQUIVOS A MODIFICAR: ";
+	Echo "============ ARQUIVOS A MODIFICAR: ";
 	EchoFileMap $toModifyFilesMap;
 	Echo "============";
 	
 	# Atualiza os arquivos a versionar ou remover em $destPath
 	$modifiedFilesMap = (UpdateToModify $modifiedFilesMap $toModifyFilesMap $maxVersionLimit $remotionCountdown $destructive $listOnly);
+	Echo "============ ARQUIVOS A MODIFICADOS APÓS 2º UPDATE: ";
+	EchoFileMap $modifiedFilesMap;
+	Echo "============";
 
 	# Realiza a cópia
-	# Robocopy $origPath $destPath;
+	# Robocopy $origPath $destPath /MIR /SJ /SL /R:1 /W:0 /MT:$threads `
+	# 	/XF `
+	# 		$wildcardOfVersionedFile `
+	# 		$wildcardOfRemovedFile `
+	# 		$wildcardOfVersionedAndRemovedFile `
+	# 	/XD `
+	# 		$wildcardOfRemovedFolder `
+	# 	/NJH /NJS;
 }
 	Function UpdateModified($modifiedFilesMap, $maxVersionLimit, $remotionCountdown, $destructive, $listOnly) {
 		$modifiedFilesMap = (UpdateVersioned $modifiedFilesMap $maxVersionLimit $destructive $listOnly);

@@ -11,89 +11,8 @@ Function UpdateToVersion($modifiedFilesMap, $toModifyFilesMap, $maxVersionLimit,
 	$filesToCopy = [System.Collections.ArrayList]::new();
 	ForEach($nameKey In $toModifyFilesMap.List()) {
 		$toModifyFile = $toModifyFilesMap.Get($nameKey).Get(-1).Get(-1);
-		$unoccupiedVersionIndex = $maxVersionLimit;
-		$isVersioned = $False;
-		# Existem versões
-		If($modifiedFilesMap.Contains($nameKey)) {
-			ForEach($versionKey In $modifiedFilesMap.Get($nameKey).List()) {
-				# VersionIndex maiores que $maxVersionLimit são ignorados
-				If($versionKey -gt $maxVersionLimit) {
-					Continue;
-				}
-				If(-Not $isVersioned) {
-					# Há um VersionIndex livre
-					If($versionKey -lt $maxVersionLimit) {
-						If($versionKey -eq -1) {
-							$unoccupiedVersionIndex = 1;
-						} Else {
-							$unoccupiedVersionIndex = $versionKey + 1;
-						}
-						$Null = $filesToCopy.Add([PSCustomObject]@{
-							File = $toModifyFile;
-							NewVersion = $unoccupiedVersionIndex;
-						});
-						$isVersioned = $True;
-						# Não é preciso renomear os outros
-						Break;
-					# Não há VersionIndex livres
-					} Else {
-						$unoccupiedVersionIndex = $maxVersionLimit;
-						$Null = $filesToCopy.Add([PSCustomObject]@{
-							File = $toModifyFile;
-							NewVersion = $unoccupiedVersionIndex;
-						});
-						$isVersioned = $True;
-						$unoccupiedVersionIndex--;
-						ForEach($removedKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
-							$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($removedKey);
-							$Null = $filesToRename.Add([PSCustomObject]@{
-								File = $removedFile;
-								NewVersion = $unoccupiedVersionIndex;
-							});
-						}
-						$unoccupiedVersionIndex--;
-						Continue;
-					}
-				} Else {
-					# VersionIndex iguais a -1 são ignorados(São os sem versão)
-					If($versionKey -eq -1) {
-						Continue;
-					}
-					# Sem VersionIndex livres, então deletar
-					If($unoccupiedVersionIndex -lt 1) {
-						ForEach($removedKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
-							$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($removedKey);
-							$Null = $filesToDelete.Add($removedFile);
-						}
-						Continue;
-					}
-					# VersionIndex menores que $maxVersionLimit devem permanecer assim
-					If($versionKey -le $unoccupiedVersionIndex) {
-						$unoccupiedVersionIndex = $versionKey;
-						$unoccupiedVersionIndex--;
-						Continue;
-					}
-					# Renomear com VersionIndex livre
-					ForEach($removedKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
-						$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($removedKey);
-						$Null = $filesToRename.Add([PSCustomObject]@{
-							File = $removedFile;
-							NewVersion = $unoccupiedVersionIndex;
-						});
-					}
-					$unoccupiedVersionIndex--;
-				}
-			}
-		}
-		# Não existem versões
-		If(-Not $isVersioned) {
-			$unoccupiedVersionIndex = 1;
-			$Null = $filesToCopy.Add([PSCustomObject]@{
-				File = $toModifyFile;
-				NewVersion = $unoccupiedVersionIndex;
-			});
-			$isVersioned = $True;
-		}
+		# Copia o a-ser-versionado, renomeando duplicatas, se houver
+		UpdateToVersion_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $toModifyFile $maxVersionLimit $True;
 	}
 	# Da lista, deleta arquivos
 	DeleteFilesList $modifiedFilesMap $filesToDelete $listOnly;
@@ -105,3 +24,51 @@ Function UpdateToVersion($modifiedFilesMap, $toModifyFilesMap, $maxVersionLimit,
 	$modifiedFilesMap = (GetSortedFileMap $modifiedFilesMap);
 	Return $modifiedFilesMap;
 }
+	Function UpdateToVersion_RenameOrDelete($modifiedFilesMap, $filesToDelete, $filesToRename, $filesToCopy, $file, $newVersionIndex, $copy) {
+		# Deletar
+		If($newVersionIndex -lt 1) {
+			$Null = $filesToDelete.Add($file);
+			Return;
+		}
+		# Se é um novo VersionIndex, tentar pegar o menor index livre
+		$fileBasePath = (Split-Path -Path $file.Path -Parent);
+		$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($file.BaseName + $file.Extension));
+		If($copy) {
+			If(-Not $modifiedFilesMap.Contains($nameKey)) {
+				$newVersionIndex = 1;
+			} Else {
+				If($newVersionIndex -gt 1) {
+					$versionKey = $($modifiedFilesMap.Get($nameKey).List())[0];
+					# $newVersionIndex deve ser maior ou igual ao último VersionIndex
+					If($versionKey -lt ($newVersionIndex -1)) {
+						$newVersionIndex = ($versionKey + 1);
+					}
+				}
+			}
+		}
+		# Copiar, aplicando novo VersionIndex
+		If($copy) {
+			$Null = $filesToCopy.Add([PSCustomObject]@{
+				File = $file;
+				NewVersion = $newVersionIndex;
+			});
+		# Renomear, aplicando novo com VersionIndex
+		} Else {
+			$Null = $filesToRename.Add([PSCustomObject]@{
+				File = $file;
+				NewVersion = $newVersionIndex;
+			});
+		}
+		# Checar se não existe outro com mesmo VersionIndex
+		$versionKey = $newVersionIndex;
+		If($modifiedFilesMap.Contains($nameKey)) {
+			If($modifiedFilesMap.Get($nameKey).Contains($versionKey)) {
+				ForEach($removedKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
+					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($removedKey);
+					# Renomeia ou deleta duplicata
+					UpdateToVersion_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $removedFile ($newVersionIndex - 1) $False;
+					Return;
+				}
+			}
+		}
+	}
