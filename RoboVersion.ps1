@@ -48,6 +48,23 @@
 	. "./UpdateToVersion.ps1";
 	. "./UpdateToRemove.ps1";
 
+
+	$origPath="D:\ \BKPM\LOC1";
+	$destPath="D:\ \BKPM\LOC2";
+	$threads=8;
+	$maxVersionLimit=3;
+	$remotionCountdown=5;
+	$destructive=$True;
+	$listOnly=$True;
+	. "./FileMap.ps1";
+	. "./Functions.ps1";
+	. "./FileManager.ps1";
+	. "./UpdateVersioned.ps1";
+	. "./UpdateRemoved.ps1";
+	. "./UpdateToVersion.ps1";
+	. "./UpdateToRemove.ps1";
+	. "./DevTools.ps1";
+
 	# PrintText $OrigPath;
 	# PrintText $DestPath;
 	# PrintText $Threads;
@@ -56,16 +73,6 @@
 	# PrintText $Destructive;
 	# PrintText $ListOnly;
 	# Return;
-	
-	If(-Not (isOrigPathValid $OrigPath)) {
-		Return;
-	}
-	If(-Not (isDestPathValid $DestPath)) {
-		Return;
-	}
-	$Threads = (validateThreads $Threads);
-	$VersionLimit = (validateMaxVersionLimit $VersionLimit);
-	$RemotionCountdown = (validateRemotionCountdown $RemotionCountdown);
 	
 	# Lista os arquivos versionados e removidos
 	$modifiedFilesMap = (GetModifiedFilesMap $DestPath $Threads);
@@ -82,14 +89,20 @@
 	PrintText "============";
 	
 	# Lista os arquivos a versionar ou remover
-	$toModifyFilesMap = (GetToModifyFilesMap $OrigPath $DestPath $Threads);
+	$toModifyLists = (GetToModifyFilesMap $OrigPath $DestPath $Threads);
 	PrintText "============ ARQUIVOS A MODIFICAR: ";
-	EchoFileMap $toModifyFilesMap;
+	ForEach($item In $toModifyLists.ToModifyList) {
+		PrintText $item;
+	}
+	PrintText "============ ARQUIVOS A DELETAR: ";
+	ForEach($item In $toModifyLists.ToDeleteList) {
+		PrintText $item;
+	}
 	PrintText "============";
 	
 	# Atualiza os arquivos a versionar ou remover em $DestPath
-	$modifiedFilesMap = (UpdateToVersion $modifiedFilesMap $toModifyFilesMap $VersionLimit $Destructive $ListOnly);
-	$modifiedFilesMap = (UpdateToRemove $modifiedFilesMap $toModifyFilesMap $RemotionCountdown $Destructive $ListOnly);
+	$modifiedFilesMap = (UpdateToVersion $modifiedFilesMap $toModifyLists.ToModifyList $VersionLimit $Destructive $ListOnly);
+	$modifiedFilesMap = (UpdateToRemove $modifiedFilesMap $toModifyLists.ToDeleteList $RemotionCountdown $Destructive $ListOnly);
 	PrintText "============ ARQUIVOS A MODIFICADOS APÓS 2º UPDATE: ";
 	EchoFileMap $modifiedFilesMap;
 	PrintText "============";
@@ -104,18 +117,3 @@
 	# 		$wildcardOfRemovedFolder `
 	# 	/NJH /NJS;
 }
-
-
-
-# RoboVersion -OrigPath "D:\ \BKPM\LOC1" -DestPath "D:\ \BKPM\LOC2" -Threads 8 -VersionLimit 3 -RemotionCountdown 5 -Destructive -ListOnly;
-	# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -Threads 8 -VersionLimit 3 -RemotionCountdown 5 -Destructive -ListOnly;
-	# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -Destructive -VersionLimit 3 -Threads 8 -RemotionCountdown 5 -ListOnly;
-	# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -Destructive -VersionLimit 3 -Threads 8 -RemotionCountdown 5 -ListOnly;
-# RoboVersion -VersionLimit 3 -Threads 8 -RemotionCountdown 5;
-	# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "D:\ \BKPM\LOC2"-V 3 -T 8 -RC 5;
-# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2"-V -1 -T 8 -RC 5;
-# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2"-V 999991 -T 8 -RC 5;
-# RoboVersion -OP "D:\ \BKPM\LOC9999" -DP "D:\ \BKPM\LOC2"-V 3 -T 8 -RC 5;
-# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "*"-V 3 -T 8 -RC 5;
-# RoboVersion -OP "D:\ \BKPM\LOC1" -DP ""-V 3 -T 8 -RC 5;
-# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"-V 3 -T 8 -RC 5;

@@ -5,12 +5,11 @@
 #       Ele recebe $remotionCountdown-1, e este recebe $remotionCountdown
 #       Se houver mais, todos trocam de r até o -1 ser removido
 #     Dessa forma, existem removidos apenas de $remotionCountdown até 0
-Function UpdateToRemove($modifiedFilesMap, $toModifyFilesMap, $remotionCountdown, $listOnly) {
+Function UpdateToRemove($modifiedFilesMap, $toModifyList, $remotionCountdown, $listOnly) {
 	$filesToDelete = [System.Collections.ArrayList]::new();
 	$filesToRename = [System.Collections.ArrayList]::new();
 	$filesToCopy = [System.Collections.ArrayList]::new();
-	ForEach($nameKey In $toModifyFilesMap.List()) {
-		$toModifyFile = $toModifyFilesMap.Get($nameKey).Get(-1).Get(-1);
+	ForEach($toModifyFile In $toModifyList) {
 		# Copia o a-ser-removido, renomeando duplicatas, se houver
 		UpdateToRemove_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $toModifyFile $remotionCountdown $True;
 		# Existem versões

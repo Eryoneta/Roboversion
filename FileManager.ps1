@@ -4,7 +4,7 @@ Function DeleteFilesList($modifiedFilesMap, $filesToDelete, $listOnly) {
 	ForEach($fileToDelete In $filesToDelete) {
 		# Deleta arquivo
 		If($listOnly) {
-			Print ("DELETE: " + $fileToDelete.Path);
+			PrintText ("DELETE: " + $fileToDelete.Path);
 		} Else {
 			# TODO
 		}
@@ -16,6 +16,7 @@ Function DeleteFilesList($modifiedFilesMap, $filesToDelete, $listOnly) {
 		$modifiedFilesMap.Get($nameKey).Get($versionKey).Remove($remotionKey);
 	}
 }
+
 # Renomeia arquivos e atualiza um filemap dado
 Function RenameRemovedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
 	# Da lista, renomeia arquivos
@@ -30,7 +31,7 @@ Function RenameRemovedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
 		$remotion = (" " + $remotionStart + $newRemotionCountdown + $remotionEnd);
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
 		If($listOnly) {
-			Print ("RENAME: " + $fileToRename.Path + " -> " + $newName);
+			PrintText ("RENAME: " + $fileToRename.Path + " -> " + $newName);
 		} Else {
 			# TODO
 		}
@@ -45,6 +46,7 @@ Function RenameRemovedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
 		$fileToRename.RemotionCountdown = $newRemotionCountdown;
 	}
 }
+
 # Renomeia arquivos e atualiza um filemap dado
 Function RenameVersionedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
 	# Da lista, renomeia arquivos
@@ -59,7 +61,7 @@ Function RenameVersionedFilesList($modifiedFilesMap, $filesToRename, $listOnly) 
 		}
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
 		If($listOnly) {
-			Print ("RENAME: " + $fileToRename.Path + " -> " + $newName);
+			PrintText ("RENAME: " + $fileToRename.Path + " -> " + $newName);
 		} Else {
 			# TODO
 		}
@@ -74,6 +76,7 @@ Function RenameVersionedFilesList($modifiedFilesMap, $filesToRename, $listOnly) 
 		$fileToRename.VersionIndex = $newVersion;
 	}
 }
+
 # Copia arquivos e atualiza um filemap dado
 Function CopyVersionedFilesList($modifiedFilesMap, $filesToCopy, $listOnly)  {
 	# Da lista, copia arquivos
@@ -90,7 +93,7 @@ Function CopyVersionedFilesList($modifiedFilesMap, $filesToCopy, $listOnly)  {
 		$newName = ($fileToCopy.BaseName + $version + $remotion + $fileToCopy.Extension);
 		$newPath = (Join-Path -Path $fileBasePath -ChildPath $newName);
 		If($listOnly) {
-			Print ("COPY: " + $fileToCopy.Path + " -> " + $newPath);
+			PrintText ("COPY: " + $fileToCopy.Path + " -> " + $newPath);
 		} Else {
 			# TODO
 		}
@@ -107,6 +110,7 @@ Function CopyVersionedFilesList($modifiedFilesMap, $filesToCopy, $listOnly)  {
 		}));
 	}
 }
+
 # Copia arquivos e atualiza um filemap dado
 Function CopyRemovedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
 	# Da lista, copia arquivos

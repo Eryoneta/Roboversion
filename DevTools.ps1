@@ -488,7 +488,8 @@ Function Test_UpdateModified() {
 		"C:\Folder\SubFolder\File _version[2] _removeIn[9].ext",
 		"";
 	$orderedMap = GetFileMap $filePathList;
-	$orderedMap = UpdateModified $orderedMap 3 5 $False $True;
+	$orderedMap = UpdateVersioned $orderedMap 3 $False $True;
+	$orderedMap = UpdateRemoved $orderedMap 5 $False $True;
 	# EchoFileMap $orderedMap;
 	$sucess = $True;
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(1)) { $sucess = $False; }
@@ -514,7 +515,8 @@ Function Test_UpdateModified() {
 		"C:\Folder\SubFolder\File _version[6] _removeIn[9].ext",
 		"";
 	$orderedMap = GetFileMap $filePathList;
-	$orderedMap = UpdateModified $orderedMap 3 5 $True $True;
+	$orderedMap = UpdateVersioned $orderedMap 3 $True $True;
+	$orderedMap = UpdateRemoved $orderedMap 5 $True $True;
 	# EchoFileMap $orderedMap;
 	$sucess = $True;
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(1)) { $sucess = $False; }
@@ -540,14 +542,19 @@ Function Test_UpdateToVersion() {
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
 	$filePathList = "",
 		"C:\Folder\SubFolder\File _version[1].ext",
 		"C:\Folder\SubFolder\File _version[2].ext",
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMap = GetFileMap $filePathList;
-	$orderedMap = UpdateToVersion $orderedMap $orderedMapToModify 3 $True;
-	# EchoFileMap $orderedMap;
+	$orderedMap = UpdateToVersion $orderedMap $toModifyList 3 $True;
+	EchoFileMap $orderedMap;
 	$sucess = $True;
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(-1)) { $sucess = $False; }
@@ -565,6 +572,11 @@ Function Test_UpdateToVersion() {
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
 	$filePathList = "",
 		"C:\Folder\SubFolder\File _version[1].ext",
 		"C:\Folder\SubFolder\File _version[2].ext",
@@ -572,7 +584,7 @@ Function Test_UpdateToVersion() {
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMap = GetFileMap $filePathList;
-	$orderedMap = UpdateToVersion $orderedMap $orderedMapToModify 3 $True;
+	$orderedMap = UpdateToVersion $orderedMap $toModifyList 3 $True;
 	# EchoFileMap $orderedMap;
 	$sucess = $True;
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
@@ -592,12 +604,17 @@ Function Test_UpdateToVersion() {
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
 	$filePathList = "",
 		"C:\Folder\SubFolder\File _version[1].ext",
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMap = GetFileMap $filePathList;
-	$orderedMap = UpdateToVersion $orderedMap $orderedMapToModify 3 $True;
+	$orderedMap = UpdateToVersion $orderedMap $toModifyList 3 $True;
 	# EchoFileMap $orderedMap;
 	$sucess = $True;
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
@@ -616,12 +633,17 @@ Function Test_UpdateToVersion() {
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
 	$filePathList = "",
 		"C:\Folder\SubFolder\File _version[3].ext",
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMap = GetFileMap $filePathList;
-	$orderedMap = UpdateToVersion $orderedMap $orderedMapToModify 3 $True;
+	$orderedMap = UpdateToVersion $orderedMap $toModifyList 3 $True;
 	# EchoFileMap $orderedMap;
 	$sucess = $True;
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
@@ -644,12 +666,17 @@ Function Test_UpdateToRemove() {
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
 	$filePathList = "",
 		"C:\Folder\SubFolder\File _version[3].ext",
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMap = GetFileMap $filePathList;
-	$orderedMap = UpdateToRemove $orderedMap $orderedMapToModify 3 $True;
+	$orderedMap = UpdateToRemove $orderedMap $toModifyList 3 $True;
 	# EchoFileMap $orderedMap;
 	$sucess = $True;
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
@@ -667,13 +694,18 @@ Function Test_UpdateToRemove() {
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
 	$filePathList = "",
 		"C:\Folder\SubFolder\File _version[3] _removeIn[2].ext",
 		"C:\Folder\SubFolder\File _removeIn[2].ext",
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMap = GetFileMap $filePathList;
-	$orderedMap = UpdateToRemove $orderedMap $orderedMapToModify 3 $True;
+	$orderedMap = UpdateToRemove $orderedMap $toModifyList 3 $True;
 	# EchoFileMap $orderedMap;
 	$sucess = $True;
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
@@ -691,13 +723,18 @@ Function Test_UpdateToRemove() {
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
 	$filePathList = "",
 		"C:\Folder\SubFolder\File _version[3] _removeIn[3].ext",
 		"C:\Folder\SubFolder\File _removeIn[3].ext",
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMap = GetFileMap $filePathList;
-	$orderedMap = UpdateToRemove $orderedMap $orderedMapToModify 3 $True;
+	$orderedMap = UpdateToRemove $orderedMap $toModifyList 3 $True;
 	# EchoFileMap $orderedMap;
 	$sucess = $True;
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
@@ -720,6 +757,18 @@ Function Test_UpdateToModify() {
 Function Test_Update() {
 	$sucessAll = $True;
 	#TODO
+	# RoboVersion -OrigPath "D:\ \BKPM\LOC1" -DestPath "D:\ \BKPM\LOC2" -Threads 8 -VersionLimit 3 -RemotionCountdown 5 -Destructive -ListOnly;
+		# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -Threads 8 -VersionLimit 3 -RemotionCountdown 5 -Destructive -ListOnly;
+		# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -Destructive -VersionLimit 3 -Threads 8 -RemotionCountdown 5 -ListOnly;
+		# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -Destructive -VersionLimit 3 -Threads 8 -RemotionCountdown 5 -ListOnly;
+	# RoboVersion -VersionLimit 3 -Threads 8 -RemotionCountdown 5;
+		# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "D:\ \BKPM\LOC2"-V 3 -T 8 -RC 5;
+	# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2"-V -1 -T 8 -RC 5;
+	# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2"-V 999991 -T 8 -RC 5;
+	# RoboVersion -OP "D:\ \BKPM\LOC9999" -DP "D:\ \BKPM\LOC2"-V 3 -T 8 -RC 5;
+	# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "*"-V 3 -T 8 -RC 5;
+	# RoboVersion -OP "D:\ \BKPM\LOC1" -DP ""-V 3 -T 8 -RC 5;
+	# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"-V 3 -T 8 -RC 5;
 	Return $sucessAll;
 }
 Function Test_All() {

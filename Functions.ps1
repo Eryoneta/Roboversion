@@ -69,6 +69,7 @@ Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 			$wildcardOfVersionedFile `
 			$wildcardOfRemovedFile `
 			$wildcardOfVersionedAndRemovedFile `
+			$toModifyFilesList_FilePath `
 		/XD `
 			$wildcardOfRemovedFolder `
 		/L /NJH /NJS /FP /NC /NS /NP /UNILOG:$toModifyFilesList_FilePath);
@@ -77,8 +78,33 @@ Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 	Remove-Item $toModifyFilesList_FilePath;
 	# Ordena lista de arquivos versionados e removidos
 	$toModifyFilesMap = GetFileMap $toModifyFilesList_File;
+	# Lista de a modificar e a remover
+	$willModifyList = [System.Collections.ArrayList]::new();
+	$willDeleteList = [System.Collections.ArrayList]::new();
+	$regexOfModifiedOrCreated = ("^(?<RootPath>" + [Regex]::Escape($origPath) + ")(?<FilePath>.*)$");
+	$regexOfDeleted = ("^(?<RootPath>" + [Regex]::Escape($destPath) + ")(?<FilePath>.*)$");
+	ForEach($nameKey In $toModifyFilesMap.List()) {
+		$toModifyFile = $toModifyFilesMap.Get($nameKey).Get(-1).Get(-1);
+		If($toModifyFile.Path -match $regexOfModifiedOrCreated) {
+			$toModifyFile.Path = (Join-Path -Path  $destPath -ChildPath $Matches.FilePath);
+			# Arquivo a modificar
+			If(Test-Path $toModifyFile.Path -PathType "Leaf") {
+				$Null = $willModifyList.Add($toModifyFile);
+			# Arquivo a criar
+			} Else {
+				# Ignorar
+			}
+		} ElseIf($toModifyFile.Path -match $regexOfDeleted) {
+			$toModifyFile.Path = (Join-Path -Path  $destPath -ChildPath $Matches.FilePath);
+			$Null = $willDeleteList.Add($toModifyFile);
+		}
+	}
+	$toModifyLists = [PSCustomObject]@{
+		ToModifyList = $willModifyList;
+		ToDeleteList = $willDeleteList;
+	};
 	# Retorna a lista
-	Return $toModifyFilesMap;
+	Return $toModifyLists;
 }
 
 # Ordena arquivos com mesmo nome em grupos, agrupando os versionados e os removidos
@@ -105,11 +131,11 @@ Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 #   Todos ficam listados em ordem numérica reversa
 Function GetFileMap($filePathList) {
 	$allFilesMap = [FileMap]::new();
-	$regexOfBaseName = "(?<BaseName>.*?)";
-	$regexOfVersion = "(?: ?" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[0-9]+)" + [Regex]::Escape($versionEnd)) + ")?";
-	$regexOfRemotion = "(?: ?" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[0-9]+)" + [Regex]::Escape($remotionEnd)) + ")?";
-	$regexOfExtension = "(?<Extension>\.[^\.]*)?";
-	$regexOfFile = "^" + $regexOfBaseName + $regexOfVersion + $regexOfRemotion + $regexOfExtension + "$";
+	$regexOfBaseName = ("(?<BaseName>.*?)");
+	$regexOfVersion = ("(?: ?" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[0-9]+)" + [Regex]::Escape($versionEnd)) + ")?");
+	$regexOfRemotion = ("(?: ?" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[0-9]+)" + [Regex]::Escape($remotionEnd)) + ")?");
+	$regexOfExtension = ("(?<Extension>\.[^\.]*)?");
+	$regexOfFile = ("^" + $regexOfBaseName + $regexOfVersion + $regexOfRemotion + $regexOfExtension + "$");
 	ForEach($filePath In $filePathList) {
 		If(-Not $filePath) {
 			Continue;
@@ -153,6 +179,7 @@ Function GetFileMap($filePathList) {
 	# Retorna o resultado
 	Return $sortedFileMap;
 }
+
 # Ordena um filemap dado
 Function GetSortedFileMap($fileMap) {
 	$sortedFileMap = [FileMap]::new();
