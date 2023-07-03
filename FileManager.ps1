@@ -4,7 +4,7 @@ Function DeleteFilesList($modifiedFilesMap, $filesToDelete, $listOnly) {
 	ForEach($fileToDelete In $filesToDelete) {
 		# Deleta arquivo
 		If($listOnly) {
-			Write-Information -MessageData ("DELETE: " + $fileToDelete.Path) -InformationAction Continue;
+			Print ("DELETE: " + $fileToDelete.Path);
 		} Else {
 			# TODO
 		}
@@ -30,7 +30,7 @@ Function RenameRemovedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
 		$remotion = (" " + $remotionStart + $newRemotionCountdown + $remotionEnd);
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
 		If($listOnly) {
-			Write-Information -MessageData ("RENAME: " + $fileToRename.Path + " -> " + $newName) -InformationAction Continue;
+			Print ("RENAME: " + $fileToRename.Path + " -> " + $newName);
 		} Else {
 			# TODO
 		}
@@ -59,7 +59,7 @@ Function RenameVersionedFilesList($modifiedFilesMap, $filesToRename, $listOnly) 
 		}
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
 		If($listOnly) {
-			Write-Information -MessageData ("RENAME: " + $fileToRename.Path + " -> " + $newName) -InformationAction Continue;
+			Print ("RENAME: " + $fileToRename.Path + " -> " + $newName);
 		} Else {
 			# TODO
 		}
@@ -90,7 +90,7 @@ Function CopyVersionedFilesList($modifiedFilesMap, $filesToCopy, $listOnly)  {
 		$newName = ($fileToCopy.BaseName + $version + $remotion + $fileToCopy.Extension);
 		$newPath = (Join-Path -Path $fileBasePath -ChildPath $newName);
 		If($listOnly) {
-			Write-Information -MessageData ("COPY: " + $fileToCopy.Path + " -> " + $newPath) -InformationAction Continue;
+			Print ("COPY: " + $fileToCopy.Path + " -> " + $newPath);
 		} Else {
 			# TODO
 		}
@@ -123,7 +123,7 @@ Function CopyRemovedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
 		$newName = ($fileToCopy.BaseName + $version + $remotion + $fileToCopy.Extension);
 		$newPath = (Join-Path -Path $fileBasePath -ChildPath $newName);
 		If($listOnly) {
-			Write-Information -MessageData ("COPY: " + $fileToCopy.Path + " -> " + $newPath) -InformationAction Continue;
+			PrintText ("COPY: " + $fileToCopy.Path + " -> " + $newPath);
 		} Else {
 			# TODO
 		}

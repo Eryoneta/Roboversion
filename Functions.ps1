@@ -27,14 +27,13 @@ $wildcardOfVersionedAndRemovedFile = ("*" + $versionStart + "*" + $versionEnd + 
 # Wildcard para ignorar pastas deletadas
 $wildcardOfRemovedFolder = ("*" + $remotionStart + "*" + $remotionEnd + "." + "*");
 
+# Print sem interromper o fluxo
+Function PrintText($text) {
+	Write-Information -MessageData ($text) -InformationAction Continue;
+}
+
 # Retorna uma lista ordenada de arquivos modificados no $destPath
 Function GetModifiedFilesMap($destPath, $threads) {
-	If(-Not $destPath) {
-		Return;
-	}
-	If(-Not $threads) {
-		$threads = 8;
-	}
 	# Path do arquivo com a lista de arquivos versionados e removidos em $destPath
 	$modifiedFilesList_FilePath = (Join-Path -Path $destPath -ChildPath "MODIFIED");
 	# Lista os arquivos versionados e removidos em MODIFIED
@@ -59,12 +58,6 @@ Function GetModifiedFilesMap($destPath, $threads) {
 
 # Retorna uma lista ordenada de arquivos que serão modificados no $destPath para refletir $origPath
 Function GetToModifyFilesMap($origPath, $destPath, $threads) {
-	If(-Not $origPath -Or -Not $destPath) {
-		Return;
-	}
-	If(-Not $threads) {
-		$threads = 8;
-	}
 	# Path do arquivo com a lista de arquivos a serem versionados ou removidos em $destPath
 	$toModifyFilesList_FilePath = (Join-Path -Path $destPath -ChildPath "TO_MODIFY");
 	# Lista os arquivos a serem versionados e removidos em TO_MODIFY

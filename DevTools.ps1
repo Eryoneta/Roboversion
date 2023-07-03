@@ -1,8 +1,5 @@
 ﻿# . "./RoboVersion.ps1";
 
-Function PrintText($text) {
-	Write-Information -MessageData ($text) -InformationAction Continue;
-}
 Function EchoFileMap($fileMap) {
 	If(-Not $fileMap) {
 		Return;
