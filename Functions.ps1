@@ -56,7 +56,7 @@ Function GetModifiedFilesMap($destPath, $threads) {
 	Return $modifiedFilesMap;
 }
 
-# Retorna uma lista ordenada de arquivos que serão modificados no $destPath para refletir $origPath
+# Retorna uma lista de arquivos que serão modificados no $destPath para refletir $origPath
 Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 	# Path do arquivo com a lista de arquivos a serem versionados ou removidos em $destPath
 	$toModifyFilesList_FilePath = (Join-Path -Path $destPath -ChildPath "TO_MODIFY");

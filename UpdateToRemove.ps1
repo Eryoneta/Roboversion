@@ -1,5 +1,5 @@
 ﻿# Atualiza os arquivos-a-serem-deletados com um novo removido
-#   Da lista de arquivos-modificados em $origPath, criar uma novo removido desta, com "removeIn[$remotionCountdown]"
+#   Da lista de arquivos-modificados em $origPath, criar uma novo removido desta, com "_removeIn[$remotionCountdown]"
 #     Checar pelos removidos existentes
 #     Se houver um removido já com $remotionCountdown:
 #       Ele recebe $remotionCountdown-1, e este recebe $remotionCountdown

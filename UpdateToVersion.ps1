@@ -1,9 +1,9 @@
 ﻿# Atualiza os arquivos-a-serem-sobrescritos com uma nova versão
-#   Da lista de arquivos-modificados em $origPath, criar uma nova versão desta, com " _version[v]"
+#   Da lista de arquivos-modificados em $origPath, criar uma nova versão desta, com "_version[v]"
 #     Checar pelas versões existentes, e adicionar uma nova versão com index v maior de todos
 #     Se o index v for maior do que $maxVersionLimit:
 #       Este toma $maxVersionLimit, e o anterior toma $maxVersionLimit-1, etc
-#       O que tiver " _version[0]" é deletado
+#       O que tiver "_version[0]" é deletado
 #     Dessa forma, existem apenas versões de 1 até $maxVersionLimit
 Function UpdateToVersion($modifiedFilesMap, $toModifyList, $maxVersionLimit, $listOnly) {
 	$filesToDelete = [System.Collections.ArrayList]::new();
@@ -62,8 +62,8 @@ Function UpdateToVersion($modifiedFilesMap, $toModifyList, $maxVersionLimit, $li
 		$versionKey = $newVersionIndex;
 		If($modifiedFilesMap.Contains($nameKey)) {
 			If($modifiedFilesMap.Get($nameKey).Contains($versionKey)) {
-				ForEach($removedKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
-					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($removedKey);
+				ForEach($remotionKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
+					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($remotionKey);
 					# Renomeia ou deleta duplicata
 					UpdateToVersion_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $removedFile ($newVersionIndex - 1) $False;
 					Return;

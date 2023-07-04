@@ -1,6 +1,6 @@
 ﻿# Atualiza os arquivos-deletados presentes no $destPath
-#   Todos que tiverem " _removedIn[0]" são deletados
-#   Todos que tiverem " _removedIn[r]" recebem "r-1"
+#   Todos que tiverem "_removedIn[0]" são deletados
+#   Todos que tiverem "_removedIn[r]" recebem "r-1"
 #   Se $destructive = $True:
 #     Apenas os $remotionCountdown+1 últimos arquivos-deletados são mantidos, o resto é deletado
 #     Estes são nomeados de $remotionCountdown até 0, do último ao primeiro
@@ -15,21 +15,21 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 	If(-Not $destructive) {
 		ForEach($nameKey In $modifiedFilesMap.List()) {
 			ForEach($versionKey In $modifiedFilesMap.Get($nameKey).List()) {
-				ForEach($removedKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
-					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($removedKey);
+				ForEach($remotionKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
+					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($remotionKey);
 					# RemotionCountdown iguais a -1 são ignorados(São os sem remoção)
-					If($removedKey -eq -1) {
+					If($remotionKey -eq -1) {
 						Continue;
 					}
 					# RemotionCountdown iguais a 0 são deletados
-					If($removedKey -eq 0) {
+					If($remotionKey -eq 0) {
 						$Null = $filesToDelete.Add($removedFile);
 						Continue;
 					}
 					# Renomear com RemotionCountdown - 1
 					$Null = $filesToRename.Add([PSCustomObject]@{
 						File = $removedFile;
-						NewRemotionCountdown = ($removedKey - 1);
+						NewRemotionCountdown = ($remotionKey - 1);
 					});
 				}
 			}
@@ -39,14 +39,14 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 		ForEach($nameKey In $modifiedFilesMap.List()) {
 			ForEach($versionKey In $modifiedFilesMap.Get($nameKey).List()) {
 				$unoccupiedRemotionCountdown = $remotionCountdown;
-				ForEach($removedKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
-					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($removedKey);
+				ForEach($remotionKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
+					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($remotionKey);
 					# RemotionCountdown iguais a -1 são ignorados(São os sem remoção)
-					If($removedKey -eq -1) {
+					If($remotionKey -eq -1) {
 						Continue;
 					}
 					# RemotionCountdown iguais a 0 são deletados
-					If($removedKey -eq 0) {
+					If($remotionKey -eq 0) {
 						$Null = $filesToDelete.Add($removedFile);
 						Continue;
 					}
@@ -56,8 +56,8 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 						Continue;
 					}
 					# RemotionCountdown menores que $remotionCountdown são renomeados com RemotionCountdown - 1
-					If($removedKey -le $unoccupiedRemotionCountdown) {
-						$unoccupiedRemotionCountdown = $removedKey;
+					If($remotionKey -le $unoccupiedRemotionCountdown) {
+						$unoccupiedRemotionCountdown = $remotionKey;
 						$Null = $filesToRename.Add([PSCustomObject]@{
 							File = $removedFile;
 							NewRemotionCountdown = ($unoccupiedRemotionCountdown - 1);
