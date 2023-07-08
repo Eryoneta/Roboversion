@@ -8,6 +8,10 @@
 #   Se $destructive = $False:
 #     Todos serão eventualmente deletados conforme seus contadores atingem [0]
 Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $listOnly) {
+	If($remotionCountdown -eq 0) {
+		# Com 0, não deve manter removidos
+		$remotionCountdown = -1;
+	}
 	# Aplica $remotionCountdown, listando arquivos para renomear ou deletar
 	$filesToDelete = [System.Collections.ArrayList]::new();
 	$filesToRename = [System.Collections.ArrayList]::new();

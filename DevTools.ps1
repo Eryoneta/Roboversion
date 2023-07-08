@@ -356,6 +356,50 @@ Function Test_UpdateVersioned() {
 	PrintText ("");
 	PrintText ("");
 	PrintText ("");
+	PrintText ('TEST: Dest(F_v2(A), F_v6(B), F_v7(C), F(D)) --($maxVersionLimit=0,$destructive)--> Dest(F(D))');
+	PrintText ("'UpdateVersioned /V=0 /D /L': Com Destructive, deve deletar todas as versões");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _version[2].ext",
+		"C:\Folder\SubFolder\File _version[6].ext",
+		"C:\Folder\SubFolder\File _version[7].ext",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateVersioned $orderedMap 0 $True $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File1.ext").Get(2).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File1.ext").Get(6).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File2.ext").Get(7).Get(-1)) { $sucess = $False; }
+	PrintText ("FUNCIONA: " + $sucess);
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ('TEST: Dest(F_v2(A), F_v6(B), F_v7(C), F(D)) --($maxVersionLimit=1,$destructive)--> Dest(F(D), F_v1(C))');
+	PrintText ("'UpdateVersioned /V=1 /D /L': Com Destructive, deve manter apenas 1 versão");
+	PrintText ("(v7 se torna v1)");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _version[2].ext",
+		"C:\Folder\SubFolder\File _version[6].ext",
+		"C:\Folder\SubFolder\File _version[7].ext",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateVersioned $orderedMap 1 $True $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File1.ext").Get(2).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File1.ext").Get(6).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File2.ext").Get(7).Get(-1)) { $sucess = $False; }
+	PrintText ("FUNCIONA: " + $sucess);
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
 	Return $sucessAll;
 }
 Function Test_UpdateRemoved() {
@@ -470,6 +514,50 @@ Function Test_UpdateRemoved() {
 	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(9)) { $sucess = $False; }
 	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(2)) { $sucess = $False; }
 	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(9)) { $sucess = $False; }
+	PrintText ("FUNCIONA: " + $sucess);
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ('TEST: Dest(F_r2(A), F_r9(B), F_r12(C), F(D)) --($remotionCountdown=0,$destructive)--> Dest(F(D)))');
+	PrintText ("'UpdateRemoved /R=0 /D /L': Com Destructive, todos os removidos devem ser deletados");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _removeIn[2].ext",
+		"C:\Folder\SubFolder\File _removeIn[9].ext",
+		"C:\Folder\SubFolder\File _removeIn[12].ext",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateRemoved $orderedMap 0 $True $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(2)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(9)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(12)) { $sucess = $False; }
+	PrintText ("FUNCIONA: " + $sucess);
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ('TEST: Dest(F_r2(A), F_r9(B), F_r12(C), F(D)) --($remotionCountdown=1,$destructive)--> Dest(F_r0(B), F_r1(C), F(D)))');
+	PrintText ("'UpdateRemoved /R=1 /D /L': Com Destructive, deve manter apenas os removidos 0 e 1");
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _removeIn[2].ext",
+		"C:\Folder\SubFolder\File _removeIn[9].ext",
+		"C:\Folder\SubFolder\File _removeIn[12].ext",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateRemoved $orderedMap 1 $True $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(0)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(2)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(9)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(12)) { $sucess = $False; }
 	PrintText ("FUNCIONA: " + $sucess);
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("");
@@ -655,6 +743,62 @@ Function Test_UpdateToVersion() {
 	PrintText ("");
 	PrintText ("");
 	PrintText ("");
+	PrintText ('TEST: Orig(F(5))->Dest(F_v3(1), F(4)) --($maxVersionLimit=0)--> Dest(F_v3(4), F(4))');
+	PrintText ("'UpdateToVersion /V=0 /L': Com valor 0, não deve fazer nada");
+	$filePathListToModify = "",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _version[3].ext",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateToVersion $orderedMap $toModifyList 0 $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(3).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(-1)) { $sucess = $False; }
+	PrintText ("FUNCIONA: " + $sucess);
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ('TEST: Orig(F(5))->Dest(F_v3(1), F(4)) --($maxVersionLimit=1)--> Dest(F_v3(4), F_v1(4), F(4))');
+	PrintText ("'UpdateToVersion /V=01 /L': Com valor 1, não deve fazer nada");
+	$filePathListToModify = "",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _version[3].ext",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateToVersion $orderedMap $toModifyList 1 $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(3).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(-1)) { $sucess = $False; }
+	PrintText ("FUNCIONA: " + $sucess);
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
 	Return $sucessAll;
 }
 Function Test_UpdateToRemove() {
@@ -742,6 +886,58 @@ Function Test_UpdateToRemove() {
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(2)) { $sucess = $False; }
 	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(3)) { $sucess = $False; }
 	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(3).Get(3)) { $sucess = $False; }
+	PrintText ("FUNCIONA: " + $sucess);
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ('TEST: Orig()->Dest(F(5)) --($remotionCountdown=0)--> Dest(F(5))');
+	PrintText ("'UpdateToRemove /R=0 /L': Com 0, não deve fazer nada");
+	$filePathListToModify = "",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
+	$filePathList = "",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateToRemove $orderedMap $toModifyList 0 $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(0)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(1)) { $sucess = $False; }
+	PrintText ("FUNCIONA: " + $sucess);
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ('TEST: Orig()->Dest(F(5)) --($remotionCountdown=1)--> Dest(F_r1(5), F(5))');
+	PrintText ("'UpdateToRemove /R=1 /L': Com 1, deve criar uma remoção 1");
+	$filePathListToModify = "",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
+	$filePathList = "",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateToRemove $orderedMap $toModifyList 1 $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(0)) { $sucess = $False; }
 	PrintText ("FUNCIONA: " + $sucess);
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("");

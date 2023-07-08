@@ -6,6 +6,10 @@
 #       Se houver mais, todos trocam de r até o -1 ser removido
 #     Dessa forma, existem removidos apenas de $remotionCountdown até 0
 Function UpdateToRemove($modifiedFilesMap, $toModifyList, $remotionCountdown, $listOnly) {
+	If($remotionCountdown -eq 0) {
+		# Com 0, não deve fazer nada
+		Return $modifiedFilesMap;
+	}
 	$filesToDelete = [System.Collections.ArrayList]::new();
 	$filesToRename = [System.Collections.ArrayList]::new();
 	$filesToCopy = [System.Collections.ArrayList]::new();

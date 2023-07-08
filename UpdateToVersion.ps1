@@ -6,6 +6,10 @@
 #       O que tiver "_version[0]" é deletado
 #     Dessa forma, existem apenas versões de 1 até $maxVersionLimit
 Function UpdateToVersion($modifiedFilesMap, $toModifyList, $maxVersionLimit, $listOnly) {
+	If($maxVersionLimit -eq 0) {
+		# Com 0, não deve fazer nada
+		Return $modifiedFilesMap;
+	}
 	$filesToDelete = [System.Collections.ArrayList]::new();
 	$filesToRename = [System.Collections.ArrayList]::new();
 	$filesToCopy = [System.Collections.ArrayList]::new();
