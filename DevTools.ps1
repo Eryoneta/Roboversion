@@ -947,24 +947,114 @@ Function Test_UpdateToRemove() {
 }
 Function Test_UpdateToModify() {
 	$sucessAll = $True;
-	#TODO
+	PrintText ('TEST: Orig()->Dest(F1(A), F2(1)) --($maxVersionLimit=1,$remotionCountdown=1)--> Dest(F1_v1(A), F1(A), F2_r1(1), F2(1))');
+	PrintText ("'UpdateToRemove /V=1 /R=1 /L': Deve criar uma versão e remoção");
+	$filePathListToModify = "",
+		"C:\Folder\SubFolder\File1.ext",
+		"";
+	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
+	$filePathListToRemove = "",
+		"C:\Folder\SubFolder\File2.ext",
+		"";
+	$orderedMapToRemove = GetFileMap $filePathListToRemove;
+	$toRemoveList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToRemove.List()) {
+		$toRemoveFile = $orderedMapToRemove.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toRemoveList.Add($toRemoveFile);
+	}
+	$filePathList = "",
+		"C:\Folder\SubFolder\File1.ext",
+		"C:\Folder\SubFolder\File2.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateToVersion $orderedMap $toModifyList 1 $True;
+	$orderedMap = UpdateToRemove $orderedMap $toRemoveList 1 $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File1.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File2.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File1.ext").Get(1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File2.ext").Get(-1).Get(1)) { $sucess = $False; }
+	PrintText ("FUNCIONA: " + $sucess);
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
 	Return $sucessAll;
 }
 Function Test_Update() {
 	$sucessAll = $True;
-	#TODO
+	PrintText ("TEST: Parâmetros nomeados devem funcionar");
 	# RoboVersion -OrigPath "D:\ \BKPM\LOC1" -DestPath "D:\ \BKPM\LOC2" -Threads 8 -VersionLimit 3 -RemotionCountdown 5 -Destructive -ListOnly;
-		# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -Threads 8 -VersionLimit 3 -RemotionCountdown 5 -Destructive -ListOnly;
-		# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -Destructive -VersionLimit 3 -Threads 8 -RemotionCountdown 5 -ListOnly;
-		# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -Destructive -VersionLimit 3 -Threads 8 -RemotionCountdown 5 -ListOnly;
+	PrintText ("Teste manual, funciona");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("TEST: Origem e destino devem aceitar posição 0 e 1");
+	# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -Threads 8 -VersionLimit 3 -RemotionCountdown 5 -Destructive -ListOnly;
+	PrintText ("Teste manual, funciona");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("TEST: Deve funcionar com tudo fora de ordem");
+	# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -Destructive -VersionLimit 3 -Threads 8 -RemotionCountdown 5 -ListOnly;
+	PrintText ("Teste manual, funciona");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("TEST: Deve perguntar pela origem e destino");
 	# RoboVersion -VersionLimit 3 -Threads 8 -RemotionCountdown 5;
-		# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "D:\ \BKPM\LOC2"-V 3 -T 8 -RC 5;
-	# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2"-V -1 -T 8 -RC 5;
-	# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2"-V 999991 -T 8 -RC 5;
-	# RoboVersion -OP "D:\ \BKPM\LOC9999" -DP "D:\ \BKPM\LOC2"-V 3 -T 8 -RC 5;
-	# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "*"-V 3 -T 8 -RC 5;
-	# RoboVersion -OP "D:\ \BKPM\LOC1" -DP ""-V 3 -T 8 -RC 5;
-	# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"-V 3 -T 8 -RC 5;
+	PrintText ("Teste manual, funciona");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("TEST: Aliases de parâmetros devem funcionar");
+	# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "D:\ \BKPM\LOC2" -V 3 -T 8 -RC 5;
+	PrintText ("Teste manual, funciona");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("TEST: Deve reclamar do V = -1");
+	# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -V -1 -T 8 -RC 5;
+	PrintText ("Teste manual, funciona");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("TEST: Deve reclamar do V = 999991");
+	# RoboVersion "D:\ \BKPM\LOC1" "D:\ \BKPM\LOC2" -V 999991 -T 8 -RC 5;
+	PrintText ("Teste manual, funciona");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("TEST: Deve reclamar da origem inexistente");
+	# RoboVersion -OP "D:\ \BKPM\LOC9999" -DP "D:\ \BKPM\LOC2" -V 3 -T 8 -RC 5;
+	PrintText ("Teste manual, funciona");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("TEST: Deve reclamar do destino inválido");
+	# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "*" -V 3 -T 8 -RC 5;
+	PrintText ("Teste manual, funciona");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("TEST: Deve reclamar do destino vazio");
+	# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "" -V 3 -T 8 -RC 5;
+	PrintText ("Teste manual, funciona");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("TEST: Deve reclamar do destino inválido(Longo demais)");
+	# RoboVersion -OP "D:\ \BKPM\LOC1" -DP "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO" -V 3 -T 8 -RC 5;
+	PrintText ("Teste manual, funciona");
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
 	Return $sucessAll;
 }
 Function Test_All() {
