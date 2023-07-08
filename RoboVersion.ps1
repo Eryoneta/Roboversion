@@ -87,12 +87,12 @@ Function RoboVersion {
 	PrintText ("");
 	PrintText ("Criar versões de arquivos a modificar");
 	PrintText ("");
-	$modifiedFilesMap = (UpdateToVersion $modifiedFilesMap $toModifyLists.ToModifyList $VersionLimit $Destructive $ListOnly);
+	$modifiedFilesMap = (UpdateToVersion $modifiedFilesMap $toModifyLists.ToModifyList $VersionLimit $ListOnly);
 	PrintText ("");
 	PrintText ("");
 	PrintText ("Criar remoções de arquivos a deletar");
 	PrintText ("");
-	$modifiedFilesMap = (UpdateToRemove $modifiedFilesMap $toModifyLists.ToDeleteList $RemotionCountdown $Destructive $ListOnly);
+	$modifiedFilesMap = (UpdateToRemove $modifiedFilesMap $toModifyLists.ToDeleteList $RemotionCountdown $ListOnly);
 	PrintText ("");
 	PrintText ("");
 	PrintText ("Iniciar Robocopy e realizar espelhamento");

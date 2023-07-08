@@ -70,7 +70,6 @@ Function UpdateToVersion($modifiedFilesMap, $toModifyList, $maxVersionLimit, $li
 					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($remotionKey);
 					# Renomeia ou deleta duplicata
 					UpdateToVersion_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $removedFile ($newVersionIndex - 1) $False;
-					Return;
 				}
 			}
 		}

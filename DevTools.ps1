@@ -947,7 +947,7 @@ Function Test_UpdateToRemove() {
 }
 Function Test_UpdateToModify() {
 	$sucessAll = $True;
-	PrintText ('TEST: Orig()->Dest(F1(A), F2(1)) --($maxVersionLimit=1,$remotionCountdown=1)--> Dest(F1_v1(A), F1(A), F2_r1(1), F2(1))');
+	PrintText ('TEST: Orig(F1(B))->Dest(F1(A), F2(1)) --($maxVersionLimit=1,$remotionCountdown=1)--> Dest(F1_v1(A), F1(A), F2_r1(1), F2(1))');
 	PrintText ("'UpdateToRemove /V=1 /R=1 /L': Deve criar uma versão e remoção");
 	$filePathListToModify = "",
 		"C:\Folder\SubFolder\File1.ext",
@@ -985,9 +985,51 @@ Function Test_UpdateToModify() {
 	PrintText ("");
 	PrintText ("");
 	PrintText ("");
+	PrintText ('TEST: Orig(F(5))->Dest(F_v1_r1(1), F_v1(1), F_v2(3), F_v3(3), F(4)) --($maxVersionLimit=3,$remotionCountdown=5)--> Dest(F_v1(2), F_v2(3), F_v3(4), F(4))');
+	PrintText ("'UpdateToRemove /V=3 /R=5 /L': Deve remover v1 e v1_r1");
+	PrintText ("(v3 se torna v2, v2 se torna v1, e v1 é deletado, junto com v1_r1)");
+	$filePathListToModify = "",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMapToModify = GetFileMap $filePathListToModify;
+	$toModifyList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToModify.List()) {
+		$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toModifyList.Add($toModifyFile);
+	}
+	$filePathListToRemove = "",
+		"";
+	$orderedMapToRemove = GetFileMap $filePathListToRemove;
+	$toRemoveList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $orderedMapToRemove.List()) {
+		$toRemoveFile = $orderedMapToRemove.Get($nameKey).Get(-1).Get(-1);
+		$Null = $toRemoveList.Add($toRemoveFile);
+	}
+	$filePathList = "",
+		"C:\Folder\SubFolder\File _version[1] _removeIn[1].ext",
+		"C:\Folder\SubFolder\File _version[1].ext",
+		"C:\Folder\SubFolder\File _version[2].ext",
+		"C:\Folder\SubFolder\File _version[3].ext",
+		"C:\Folder\SubFolder\File.ext",
+		"";
+	$orderedMap = GetFileMap $filePathList;
+	$orderedMap = UpdateToVersion $orderedMap $toModifyList 3 $True;
+	$orderedMap = UpdateToRemove $orderedMap $toRemoveList 5 $True;
+	# EchoFileMap $orderedMap;
+	$sucess = $True;
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(-1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(2).Get(-1)) { $sucess = $False; }
+	If(-Not $orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(3).Get(-1)) { $sucess = $False; }
+	If($orderedMap.Get("C:\Folder\SubFolder\File.ext").Get(1).Get(1)) { $sucess = $False; }
+	PrintText ("FUNCIONA: " + $sucess);
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("");
+	PrintText ("");
+	PrintText ("");
 	Return $sucessAll;
 }
-Function Test_Update() {
+Function Test_RoboVersion_Input() {
 	$sucessAll = $True;
 	PrintText ("TEST: Parâmetros nomeados devem funcionar");
 	# RoboVersion -OrigPath "D:\ \BKPM\LOC1" -DestPath "D:\ \BKPM\LOC2" -Threads 8 -VersionLimit 3 -RemotionCountdown 5 -Destructive -ListOnly;
@@ -1057,19 +1099,25 @@ Function Test_Update() {
 	PrintText ("");
 	Return $sucessAll;
 }
+Function Test_RoboVersion() {
+	$sucessAll = $True;
+	#TODO
+	Return $sucessAll;
+}
 Function Test_All() {
 	# Básico
 	$sucessTest_GetFileMap = Test_GetFileMap;
-	# Update dos arquivos versionados
+	# Update dos arquivos versionados e removidos
 	$sucessTest_UpdateVersioned = Test_UpdateVersioned;
 	$sucessTest_UpdateRemoved = Test_UpdateRemoved;
 	$sucessTest_UpdateModified = Test_UpdateModified;
-	# Update com os arquivos modificados
+	# Update com os arquivos a modificar e deletar
 	$sucessTest_UpdateToVersion = Test_UpdateToVersion;
 	$sucessTest_UpdateToRemove = Test_UpdateToRemove;
 	$sucessTest_UpdateToModify = Test_UpdateToModify;
 	# Update de todos os arquivos
-	$sucessTest_Update = Test_Update;
+	$sucessTest_RoboVersion_Input = Test_RoboVersion_Input;
+	$sucessTest_RoboVersion = Test_RoboVersion;
 	# Resultado
 	$sucessAll = $True;
 	PrintText ("Test_GetFileMap FUNCIONA: " + $sucessTest_GetFileMap);
@@ -1079,7 +1127,8 @@ Function Test_All() {
 	PrintText ("Test_UpdateToVersion FUNCIONA: " + $sucessTest_UpdateToVersion);
 	PrintText ("Test_UpdateToRemove FUNCIONA: " + $sucessTest_UpdateToRemove);
 	PrintText ("Test_UpdateToModify FUNCIONA: " + $sucessTest_UpdateToModify);
-	PrintText ("Test_Update FUNCIONA: " + $sucessTest_Update);
+	PrintText ("Test_RoboVersion_Input FUNCIONA: " + $sucessTest_RoboVersion_Input);
+	PrintText ("Test_RoboVersion FUNCIONA: " + $sucessTest_RoboVersion);
 	If(-Not $sucessTest_GetFileMap) { $sucessAll = $False; }
 	If(-Not $sucessTest_UpdateVersioned) { $sucessAll = $False; }
 	If(-Not $sucessTest_UpdateRemoved) { $sucessAll = $False; }
@@ -1087,7 +1136,8 @@ Function Test_All() {
 	If(-Not $sucessTest_UpdateToVersion) { $sucessAll = $False; }
 	If(-Not $sucessTest_UpdateToRemove) { $sucessAll = $False; }
 	If(-Not $sucessTest_UpdateToModify) { $sucessAll = $False; }
-	If(-Not $sucessTest_Update) { $sucessAll = $False; }
+	If(-Not $sucessTest_RoboVersion_Input) { $sucessAll = $False; }
+	If(-Not $sucessTest_RoboVersion) { $sucessAll = $False; }
 	PrintText ("");
 	PrintText ("TUDO FUNCIONA: " + $sucessAll);
 }
