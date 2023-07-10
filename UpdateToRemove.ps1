@@ -5,7 +5,7 @@
 #       Ele recebe $remotionCountdown-1, e este recebe $remotionCountdown
 #       Se houver mais, todos trocam de r até o -1 ser removido
 #     Dessa forma, existem removidos apenas de $remotionCountdown até 0
-Function UpdateToRemove($modifiedFilesMap, $toModifyList, $remotionCountdown, $listOnly) {
+Function UpdateToRemove($modifiedFilesMap, $toRemoveList, $remotionCountdown, $listOnly) {
 	If($remotionCountdown -eq 0) {
 		# Com 0, não deve fazer nada
 		Return $modifiedFilesMap;
@@ -13,10 +13,12 @@ Function UpdateToRemove($modifiedFilesMap, $toModifyList, $remotionCountdown, $l
 	$filesToDelete = [System.Collections.ArrayList]::new();
 	$filesToRename = [System.Collections.ArrayList]::new();
 	$filesToCopy = [System.Collections.ArrayList]::new();
-	ForEach($toModifyFile In $toModifyList) {
+	ForEach($toRemoveFile In $toRemoveList) {
 		# Copia o a-ser-removido, renomeando duplicatas, se houver
-		UpdateToRemove_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $toModifyFile $remotionCountdown $True;
+		UpdateToRemove_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $toRemoveFile $remotionCountdown $True;
 		# Existem versões
+		$fileBasePath = (Split-Path -Path $toRemoveFile.Path -Parent);
+		$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($toRemoveFile.BaseName + $toRemoveFile.Extension));
 		If($modifiedFilesMap.Contains($nameKey)) {
 			ForEach($versionKey In $modifiedFilesMap.Get($nameKey).List()) {
 				# VersionIndex igual a -1 é ignorado(É o que foi copiado)
