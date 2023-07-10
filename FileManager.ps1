@@ -1,9 +1,12 @@
 ﻿# Deleta arquivos e atualiza um filemap dado
 Function DeleteFilesList($modifiedFilesMap, $filesToDelete, $listOnly) {
+	If($filesToDelete.Count -eq 0) {
+		Return;
+	}
 	# Da lista, deleta arquivos
 	ForEach($fileToDelete In $filesToDelete) {
 		# Deleta arquivo
-		PrintText ("Deleted: " + $fileToDelete.Path);
+		PrintText ("`tDeleted`t" + $fileToDelete.Path);
 		If(-Not $listOnly) {
 			Remove-Item -LiteralPath $fileToDelete.Path -Force;
 		}
@@ -18,6 +21,9 @@ Function DeleteFilesList($modifiedFilesMap, $filesToDelete, $listOnly) {
 
 # Renomeia arquivos e atualiza um filemap dado
 Function RenameRemovedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
+	If($filesToRename.Count -eq 0) {
+		Return;
+	}
 	# Da lista, renomeia arquivos
 	ForEach($fileToRename In $filesToRename | Sort-Object -Property NewRemotionCountdown) {
 		$newRemotionCountdown = $fileToRename.NewRemotionCountdown;
@@ -29,7 +35,7 @@ Function RenameRemovedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
 		}
 		$remotion = (" " + $remotionStart + $newRemotionCountdown + $remotionEnd);
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
-		PrintText ("Renamed: " + $fileToRename.Path + " -> " + $newName);
+		PrintText ("`tRenamed`t" + $fileToRename.Path + " ---> " + $newName);
 		If(-Not $listOnly) {
 			Rename-Item -LiteralPath $fileToRename.Path -NewName $newName -Force;
 		}
@@ -47,6 +53,9 @@ Function RenameRemovedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
 
 # Renomeia arquivos e atualiza um filemap dado
 Function RenameVersionedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
+	If($filesToRename.Count -eq 0) {
+		Return;
+	}
 	# Da lista, renomeia arquivos
 	ForEach($fileToRename In $filesToRename | Sort-Object -Property NewVersion) {
 		$newVersion = $fileToRename.NewVersion;
@@ -58,7 +67,7 @@ Function RenameVersionedFilesList($modifiedFilesMap, $filesToRename, $listOnly) 
 			$remotion = (" " + $remotionStart + $fileToRename.RemotionCountdown + $remotionEnd);
 		}
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
-		PrintText ("Renamed: " + $fileToRename.Path + " -> " + $newName);
+		PrintText ("`tRenamed`t" + $fileToRename.Path + " ---> " + $newName);
 		If(-Not $listOnly) {
 			Rename-Item -LiteralPath $fileToRename.Path -NewName $newName -Force;
 		}
@@ -75,7 +84,10 @@ Function RenameVersionedFilesList($modifiedFilesMap, $filesToRename, $listOnly) 
 }
 
 # Copia arquivos e atualiza um filemap dado
-Function CopyVersionedFilesList($modifiedFilesMap, $filesToCopy, $listOnly)  {
+Function CopyVersionedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
+	If($filesToCopy.Count -eq 0) {
+		Return;
+	}
 	# Da lista, copia arquivos
 	ForEach($fileToCopy In $filesToCopy) {
 		$newVersion = $fileToCopy.NewVersion;
@@ -89,7 +101,7 @@ Function CopyVersionedFilesList($modifiedFilesMap, $filesToCopy, $listOnly)  {
 		$fileBasePath = (Split-Path -Path $fileToCopy.Path -Parent);
 		$newName = ($fileToCopy.BaseName + $version + $remotion + $fileToCopy.Extension);
 		$newPath = (Join-Path -Path $fileBasePath -ChildPath $newName);
-		PrintText ("Copied: " + $fileToCopy.Path + " -> " + $newPath);
+		PrintText ("`tCopied`t" + $fileToCopy.Path + " ---> " + $newPath);
 		If(-Not $listOnly) {
 			Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force;
 		}
@@ -109,6 +121,9 @@ Function CopyVersionedFilesList($modifiedFilesMap, $filesToCopy, $listOnly)  {
 
 # Copia arquivos e atualiza um filemap dado
 Function CopyRemovedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
+	If($filesToCopy.Count -eq 0) {
+		Return;
+	}
 	# Da lista, copia arquivos
 	ForEach($fileToCopy In $filesToCopy) {
 		$newRemotionCountdown = $fileToCopy.NewRemotionCountdown;
@@ -122,7 +137,7 @@ Function CopyRemovedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
 		$fileBasePath = (Split-Path -Path $fileToCopy.Path -Parent);
 		$newName = ($fileToCopy.BaseName + $version + $remotion + $fileToCopy.Extension);
 		$newPath = (Join-Path -Path $fileBasePath -ChildPath $newName);
-		PrintText ("Copied: " + $fileToCopy.Path + " -> " + $newPath);
+		PrintText ("`tCopied`t" + $fileToCopy.Path + " ---> " + $newPath);
 		If(-Not $listOnly) {
 			Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force;
 		}

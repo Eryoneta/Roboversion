@@ -67,36 +67,27 @@ Function RoboVersion {
 	. "./UpdateRemoved.ps1";
 	. "./UpdateToVersion.ps1";
 	. "./UpdateToRemove.ps1";
+	PrintText ("");
+	PrintText ("");
 	# Lista os arquivos versionados e removidos
 	$modifiedFilesMap = (GetModifiedFilesMap $DestPath $Threads);
 	# Atualiza os arquivos versionados e removidos em $DestPath
-	PrintText ("");
-	PrintText ("");
-	PrintText ("Tratar arquivos versionados no destino");
-	PrintText ("");
+	PrintText ("Etapa 1: Tratar arquivos versionados no destino");
 	$modifiedFilesMap = (UpdateVersioned $modifiedFilesMap $VersionLimit $Destructive $ListOnly);
 	PrintText ("");
-	PrintText ("");
-	PrintText ("Tratar arquivos removidos no destino");
-	PrintText ("");
+	PrintText ("Etapa 2: Tratar arquivos removidos no destino");
 	$modifiedFilesMap = (UpdateRemoved $modifiedFilesMap $RemotionCountdown $Destructive $ListOnly);
+	PrintText ("");
 	# Lista os arquivos a versionar ou remover
 	$toModifyLists = (GetToModifyFilesMap $OrigPath $DestPath $Threads);
 	# Atualiza os arquivos a versionar ou remover em $DestPath
-	PrintText ("");
-	PrintText ("");
-	PrintText ("Criar versões de arquivos a modificar");
-	PrintText ("");
+	PrintText ("Etapa 3: Criar versões de arquivos modificados na origem");
 	$modifiedFilesMap = (UpdateToVersion $modifiedFilesMap $toModifyLists.ToModifyList $VersionLimit $ListOnly);
 	PrintText ("");
-	PrintText ("");
-	PrintText ("Criar remoções de arquivos a deletar");
-	PrintText ("");
+	PrintText ("Etapa 4: Criar remoções de arquivos deletados na origem");
 	$modifiedFilesMap = (UpdateToRemove $modifiedFilesMap $toModifyLists.ToDeleteList $RemotionCountdown $ListOnly);
 	PrintText ("");
-	PrintText ("");
-	PrintText ("Iniciar Robocopy e realizar espelhamento");
-	PrintText ("");
+	PrintText ("Etapa 5: Iniciar Robocopy e realizar espelhamento");
 	# Realiza a cópia
 	$list = "";
 	If($ListOnly) {
@@ -110,4 +101,5 @@ Function RoboVersion {
 		/XD `
 			$wildcardOfRemovedFolder `
 		$list /NJH /NJS;
+	PrintText ("");
 }

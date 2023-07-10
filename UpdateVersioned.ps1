@@ -8,6 +8,7 @@
 Function UpdateVersioned($modifiedFilesMap, $maxVersionLimit, $destructive, $listOnly) {
 	# Não-Destrutivo = Não faz nada
 	If(-Not $destructive) {
+		PrintText ("`tNenhuma ação necessária");
 		Return $modifiedFilesMap;
 	}
 	# Destrutivo = Aplica $maxVersionLimit, listando arquivos para renomear ou deletar
@@ -44,6 +45,10 @@ Function UpdateVersioned($modifiedFilesMap, $maxVersionLimit, $destructive, $lis
 			}
 			$unoccupiedVersionIndex--;
 		}
+	}
+	# Output
+	If($filesToDelete.Count -eq 0 -And $filesToRename.Count -eq 0) {
+		PrintText ("`tNenhuma ação necessária");
 	}
 	# Da lista, deleta arquivos
 	DeleteFilesList $modifiedFilesMap $filesToDelete $listOnly;

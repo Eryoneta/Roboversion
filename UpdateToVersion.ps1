@@ -8,6 +8,7 @@
 Function UpdateToVersion($modifiedFilesMap, $toModifyList, $maxVersionLimit, $listOnly) {
 	If($maxVersionLimit -eq 0) {
 		# Com 0, não deve fazer nada
+		PrintText ("`tNenhuma ação necessária");
 		Return $modifiedFilesMap;
 	}
 	$filesToDelete = [System.Collections.ArrayList]::new();
@@ -16,6 +17,10 @@ Function UpdateToVersion($modifiedFilesMap, $toModifyList, $maxVersionLimit, $li
 	ForEach($toModifyFile In $toModifyList) {
 		# Copia o a-ser-versionado, renomeando duplicatas, se houver
 		UpdateToVersion_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $toModifyFile $maxVersionLimit $True;
+	}
+	# Output
+	If($filesToDelete.Count -eq 0 -And $filesToRename.Count -eq 0 -And $filesToCopy.Count -eq 0) {
+		PrintText ("`tNenhuma ação necessária");
 	}
 	# Da lista, deleta arquivos
 	DeleteFilesList $modifiedFilesMap $filesToDelete $listOnly;

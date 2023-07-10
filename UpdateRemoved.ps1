@@ -79,6 +79,10 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 			}
 		}
 	}
+	# Output
+	If($filesToDelete.Count -eq 0 -And $filesToRename.Count -eq 0) {
+		PrintText ("`tNenhuma ação necessária");
+	}
 	# Da lista, deleta arquivos
 	DeleteFilesList $modifiedFilesMap $filesToDelete $listOnly;
 	# Da lista, renomeia arquivos
