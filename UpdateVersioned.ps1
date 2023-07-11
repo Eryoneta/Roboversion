@@ -23,9 +23,9 @@ Function UpdateVersioned($modifiedFilesMap, $maxVersionLimit, $destructive, $lis
 			}
 			# Sem VersionIndex livres, então deletar
 			If($unoccupiedVersionIndex -lt 1) {
-				ForEach($remotionKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
-					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($remotionKey);
-					$Null = $filesToDelete.Add($removedFile);
+				If($modifiedFilesMap.Get($nameKey).Get($versionKey).Contains(-1)) {
+					$file = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get(-1);
+					$Null = $filesToDelete.Add($file);
 				}
 				Continue;
 			}
@@ -36,10 +36,10 @@ Function UpdateVersioned($modifiedFilesMap, $maxVersionLimit, $destructive, $lis
 				Continue;
 			}
 			# Renomear com VersionIndex livre
-			ForEach($remotionKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
-				$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($remotionKey);
+			If($modifiedFilesMap.Get($nameKey).Get($versionKey).Contains(-1)) {
+				$file = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get(-1);
 				$Null = $filesToRename.Add([PSCustomObject]@{
-					File = $removedFile;
+					File = $file;
 					NewVersion = $unoccupiedVersionIndex;
 				});
 			}

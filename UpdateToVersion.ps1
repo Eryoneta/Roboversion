@@ -45,12 +45,22 @@ Function UpdateToVersion($modifiedFilesMap, $toModifyList, $maxVersionLimit, $li
 			If(-Not $modifiedFilesMap.Contains($nameKey)) {
 				$newVersionIndex = 1;
 			} Else {
-				If($newVersionIndex -gt 1) {
-					$versionKey = $($modifiedFilesMap.Get($nameKey).List())[0];
-					# $newVersionIndex deve ser maior ou igual ao último VersionIndex
-					If($versionKey -lt ($newVersionIndex -1)) {
-						$newVersionIndex = ($versionKey + 1);
+				$foundValidIndex = $False;
+				ForEach($versionKey In $modifiedFilesMap.Get($nameKey).List()) {
+					If($versionKey -eq -1) {
+						Continue;
 					}
+					If($modifiedFilesMap.Get($nameKey).Get($versionKey).Contains(-1)) {
+						$foundValidIndex = $True;
+						# $newVersionIndex deve ser maior ou igual ao último VersionIndex-não-removido
+						If(($versionKey + 1) -lt $newVersionIndex) {
+							$newVersionIndex = ($versionKey + 1);
+						}
+						Break;
+					}
+				}
+				If(-Not $foundValidIndex) {
+					$newVersionIndex = 1;
 				}
 			}
 		}
@@ -71,10 +81,10 @@ Function UpdateToVersion($modifiedFilesMap, $toModifyList, $maxVersionLimit, $li
 		$versionKey = $newVersionIndex;
 		If($modifiedFilesMap.Contains($nameKey)) {
 			If($modifiedFilesMap.Get($nameKey).Contains($versionKey)) {
-				ForEach($remotionKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
-					$removedFile = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get($remotionKey);
+				If($modifiedFilesMap.Get($nameKey).Get($versionKey).Contains(-1)) {
+					$file = $modifiedFilesMap.Get($nameKey).Get($versionKey).Get(-1);
 					# Renomeia ou deleta duplicata
-					UpdateToVersion_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $removedFile ($newVersionIndex - 1) $False;
+					UpdateToVersion_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $file ($newVersionIndex - 1) $False;
 				}
 			}
 		}
