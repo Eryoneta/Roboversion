@@ -21,11 +21,11 @@ $remotionStart = "_removeIn[";
 $remotionEnd = "]";
 
 # Wildcard para ignorar arquivos versionados e removidos
-$wildcardOfVersionedFile = ("*" + $versionStart + "*" + $versionEnd + "." + "*");
-$wildcardOfRemovedFile = ("*" + $remotionStart + "*" + $remotionEnd + "." + "*");
-$wildcardOfVersionedAndRemovedFile = ("*" + $versionStart + "*" + $versionEnd + "*" + $remotionStart + "*" + $remotionEnd + "." + "*");
+$wildcardOfVersionedFile = ("*" + $versionStart + "*" + $versionEnd + "*");
+$wildcardOfRemovedFile = ("*" + $remotionStart + "*" + $remotionEnd + "*");
+$wildcardOfVersionedAndRemovedFile = ("*" + $versionStart + "*" + $versionEnd + "*" + $remotionStart + "*" + $remotionEnd + "*");
 # Wildcard para ignorar pastas deletadas
-$wildcardOfRemovedFolder = ("*" + $remotionStart + "*" + $remotionEnd + "." + "*");
+$wildcardOfRemovedFolder = ("*" + $remotionStart + "*" + $remotionEnd + "*");
 
 # Print sem interromper o fluxo
 Function PrintText($text) {
@@ -44,12 +44,12 @@ Function GetModifiedFilesMap($destPath, $threads) {
 		$wildcardOfVersionedFile `
 		$wildcardOfRemovedFile `
 		$wildcardOfVersionedAndRemovedFile `
-		/SJ /SL /R:1 /W:0 /MT:$threads /L /NJH /NJS /FP /NC /NS /NP /NDL /UNILOG:$modifiedFilesList_FilePath);
+		/S /SJ /SL /R:1 /W:0 /MT:$threads /L /NJH /NJS /FP /NC /NS /NP /NDL /UNILOG:$modifiedFilesList_FilePath);
 	# Carrega MODIFIED e o deleta
 	$modifiedFilesList_File = (Get-Content $modifiedFilesList_FilePath);
 	Remove-Item $modifiedFilesList_FilePath;
 	# Lista pastas-removidas
-	$removedFoldersList = ((Get-ChildItem -LiteralPath $destPath -Filter $wildcardOfRemovedFolder -Recurse -Directory) | ForEach {"$($_.FullName)"})
+	$removedFoldersList = ((Get-ChildItem -LiteralPath $destPath -Filter $wildcardOfRemovedFolder -Recurse -Directory) | ForEach {"$($_.FullName)"});
 	# Ordena lista de arquivos versionados e removidos e pastas removidas
 	$modifiedFilesMap = GetFileMap ($modifiedFilesList_File + $removedFoldersList);
 	# Retorna a lista
@@ -88,7 +88,7 @@ Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 		If($toModifyFile.Path -match $regexOfModifiedOrCreated) {
 			$toModifyFile.Path = (Join-Path -Path  $destPath -ChildPath $Matches.FilePath);
 			# Arquivo a modificar
-			If(Test-Path $toModifyFile.Path -PathType "Leaf") {
+			If(Test-Path -LiteralPath $toModifyFile.Path -PathType "Leaf") {
 				$Null = $willModifyList.Add($toModifyFile);
 			# Arquivo a criar
 			} Else {

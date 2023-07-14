@@ -8,7 +8,7 @@ Function DeleteFilesList($modifiedFilesMap, $filesToDelete, $listOnly) {
 		# Deleta arquivo
 		PrintText ("`tDeleted`t" + $fileToDelete.Path);
 		If(-Not $listOnly) {
-			Remove-Item -LiteralPath $fileToDelete.Path -Force;
+			Remove-Item -LiteralPath $fileToDelete.Path -Recurse -Force;
 		}
 		# Deleta no fileMap
 		$fileBasePath = (Split-Path -Path $fileToDelete.Path -Parent);
@@ -103,7 +103,7 @@ Function CopyVersionedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
 		$newPath = (Join-Path -Path $fileBasePath -ChildPath $newName);
 		PrintText ("`tCopied`t" + $fileToCopy.Path + " ---> " + $newPath);
 		If(-Not $listOnly) {
-			Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force;
+			Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Recurse -Force;
 		}
 		# Copia no fileMap
 		$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($fileToCopy.BaseName + $fileToCopy.Extension));
@@ -139,7 +139,7 @@ Function CopyRemovedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
 		$newPath = (Join-Path -Path $fileBasePath -ChildPath $newName);
 		PrintText ("`tCopied`t" + $fileToCopy.Path + " ---> " + $newPath);
 		If(-Not $listOnly) {
-			Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force;
+			Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Recurse -Force;
 		}
 		# Copia no fileMap
 		$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($fileToCopy.BaseName + $fileToCopy.Extension));
