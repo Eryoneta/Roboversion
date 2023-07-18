@@ -19,20 +19,21 @@ $versionEnd = "]";
 # Padrão do nome de arquivos removidos
 $remotionStart = "_removeIn[";
 $remotionEnd = "]";
+# Padrão do nome de pastas removidas
+$remotionFolder = "_removeIfEmpty";
 
 # Wildcard para ignorar arquivos versionados e removidos
 $wildcardOfVersionedFile = ("*" + $versionStart + "*" + $versionEnd + "*");
 $wildcardOfRemovedFile = ("*" + $remotionStart + "*" + $remotionEnd + "*");
-$wildcardOfVersionedAndRemovedFile = ("*" + $versionStart + "*" + $versionEnd + "*" + $remotionStart + "*" + $remotionEnd + "*");
 # Wildcard para ignorar pastas deletadas
-$wildcardOfRemovedFolder = ("*" + $remotionStart + "*" + $remotionEnd + "*");
+$wildcardOfRemovedFolder = ("*" + $remotionFolder + "*");
 
 # Print sem interromper o fluxo
 Function PrintText($text) {
 	Write-Information -MessageData ($text) -InformationAction Continue;
 }
 
-# Retorna uma lista ordenada de arquivos modificados no $destPath
+# Retorna um fileMap de arquivos modificados no $destPath
 Function GetModifiedFilesMap($destPath, $threads) {
 	# Path do arquivo com a lista de arquivos versionados e removidos em $destPath
 	$modifiedFilesList_FilePath = (Join-Path -Path $destPath -ChildPath "MODIFIED");
@@ -43,21 +44,29 @@ Function GetModifiedFilesMap($destPath, $threads) {
 	$Null = (Robocopy $destPath null `
 		$wildcardOfVersionedFile `
 		$wildcardOfRemovedFile `
-		$wildcardOfVersionedAndRemovedFile `
 		/S /SJ /SL /R:1 /W:0 /MT:$threads /L /NJH /NJS /FP /NC /NS /NP /NDL /UNILOG:$modifiedFilesList_FilePath);
 	# Carrega MODIFIED e o deleta
 	$modifiedFilesList_File = (Get-Content $modifiedFilesList_FilePath);
-	Remove-Item $modifiedFilesList_FilePath;
-	# Lista pastas-removidas
-	$removedFoldersList = ((Get-ChildItem -LiteralPath $destPath -Filter $wildcardOfRemovedFolder -Recurse -Directory) | ForEach {"$($_.FullName)"});
-	# Ordena lista de arquivos versionados e removidos e pastas removidas
-	$modifiedFilesMap = GetFileMap ($modifiedFilesList_File + $removedFoldersList);
+	$Null = Remove-Item $modifiedFilesList_FilePath;
+	# Ordena lista de arquivos versionados e removidos, e pastas removidas
+	$removedFoldersPathList = ((Get-ChildItem -LiteralPath $destPath -Filter $wildcardOfRemovedFolder -Recurse -Directory) | ForEach {"$($_.FullName)"});
+	$modifiedFilesMap = GetFileMap ($modifiedFilesList_File);
+	$removedFoldersMap = GetFileMap ($removedFoldersPathList);
+	$removedFoldersList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In $removedFoldersMap.List() | Sort-Object -Descending) {
+		$removedFolder = $removedFoldersMap.Get($nameKey).Get(-1).Get(0);
+		$Null = $removedFoldersList.Add($removedFolder);
+	}
+	$modifiedLists = [PSCustomObject]@{
+		ModifiedFilesMap = $modifiedFilesMap;
+		RemovedFoldersList = $removedFoldersList;
+	};
 	# Retorna a lista
-	Return $modifiedFilesMap;
+	Return $modifiedLists;
 }
 
 # Retorna uma lista de arquivos que serão modificados no $destPath para refletir $origPath
-Function GetToModifyFilesMap($origPath, $destPath, $threads) {
+Function GetWillModifyFilesMap($origPath, $destPath, $threads) {
 	# Path do arquivo com a lista de arquivos a serem versionados ou removidos em $destPath
 	$toModifyFilesList_FilePath = (Join-Path -Path $destPath -ChildPath "TO_MODIFY");
 	# Lista os arquivos a serem versionados e removidos em TO_MODIFY
@@ -68,19 +77,19 @@ Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 		/XF `
 			$wildcardOfVersionedFile `
 			$wildcardOfRemovedFile `
-			$wildcardOfVersionedAndRemovedFile `
 			$toModifyFilesList_FilePath `
 		/XD `
 			$wildcardOfRemovedFolder `
 		/L /NJH /NJS /FP /NC /NS /NP /UNILOG:$toModifyFilesList_FilePath);
 	# Carrega TO_MODIFY e o deleta
 	$toModifyFilesList_File = (Get-Content $toModifyFilesList_FilePath);
-	Remove-Item $toModifyFilesList_FilePath;
+	$Null = Remove-Item $toModifyFilesList_FilePath;
 	# Ordena lista de arquivos versionados e removidos
 	$toModifyFilesMap = GetFileMap $toModifyFilesList_File;
 	# Lista de a modificar e a remover
 	$willModifyList = [System.Collections.ArrayList]::new();
 	$willDeleteList = [System.Collections.ArrayList]::new();
+	$willDeleteFolderList = [System.Collections.ArrayList]::new();
 	$regexOfModifiedOrCreated = ("^(?<RootPath>" + [Regex]::Escape($origPath) + ")(?<FilePath>.*)$");
 	$regexOfDeleted = ("^(?<RootPath>" + [Regex]::Escape($destPath) + ")(?<FilePath>.*)$");
 	ForEach($nameKey In $toModifyFilesMap.List()) {
@@ -96,15 +105,24 @@ Function GetToModifyFilesMap($origPath, $destPath, $threads) {
 			}
 		} ElseIf($toModifyFile.Path -match $regexOfDeleted) {
 			$toModifyFile.Path = (Join-Path -Path  $destPath -ChildPath $Matches.FilePath);
-			$Null = $willDeleteList.Add($toModifyFile);
+			If(Test-Path -LiteralPath $toModifyFile.Path -PathType "Container") {
+				$Null = $willDeleteFolderList.Add($toModifyFile);
+			} Else {
+				$Null = $willDeleteList.Add($toModifyFile);
+			}
 		}
 	}
-	$toModifyLists = [PSCustomObject]@{
-		ToModifyList = $willModifyList;
-		ToDeleteList = $willDeleteList;
+	$orderedWillDeleteFolderList = [System.Collections.ArrayList]::new();
+	ForEach($willDeleteFolder In ($willDeleteFolderList | Sort-Object -Descending)) {
+		$Null = $orderedWillDeleteFolderList.Add($willDeleteFolder);
+	}
+	$willModifyLists = [PSCustomObject]@{
+		WillModifyList = $willModifyList;
+		WillDeleteList = $willDeleteList;
+		WillDeleteFolderList = $orderedWillDeleteFolderList;
 	};
 	# Retorna a lista
-	Return $toModifyLists;
+	Return $willModifyLists;
 }
 
 # Ordena arquivos com mesmo nome em grupos, agrupando os versionados e os removidos
@@ -136,6 +154,8 @@ Function GetFileMap($filePathList) {
 	$regexOfRemotion = ("(?: ?" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[0-9]+)" + [Regex]::Escape($remotionEnd)) + ")?");
 	$regexOfExtension = ("(?<Extension>\.[^\.]*)?");
 	$regexOfFile = ("^" + $regexOfBaseName + $regexOfVersion + $regexOfRemotion + $regexOfExtension + "$");
+	$regexOfFolderRemotion = ("(?: ?" + [Regex]::Escape($remotionFolder) + ")");
+	$regexOfFolder = ("^" + $regexOfBaseName + $regexOfFolderRemotion + $regexOfExtension + "$");
 	ForEach($filePath In $filePathList) {
 		If(-Not $filePath) {
 			Continue;
@@ -147,7 +167,20 @@ Function GetFileMap($filePathList) {
 		#   $filePath = "C:\Folder\SubFolder\File _version[v] _removeIn[r].ext"
 		#   $fileBasePath = "C:\Folder\SubFolder"
 		#   $fileName = "File _version[v] _removeIn[r].ext"
-		If($fileName -Match $regexOfFile) {
+		If($fileName -Match $regexOfFolder) {
+			# Ex.:
+			#   BaseName = "Folder"
+			#   RemotionCountdown = "r"
+			#   Extension = ".ext"
+			$baseName = (Join-Path -Path $fileBasePath -ChildPath ($Matches.BaseName + $Matches.Extension));
+			# Ex.:
+			#   $baseName = "C:\Folder\SubFolder\Folder.ext"
+			$versionIndex = -1;
+			$remotionCountdown = 0;
+			# Valor
+			$newFile = (NewFileItem $filePath $Matches.BaseName $versionIndex $remotionCountdown $Matches.Extension);
+			$allFilesMap.Get($baseName).Get($versionIndex).Set($remotionCountdown, $newFile);
+		} ElseIf($fileName -Match $regexOfFile) {
 			# Ex.:
 			#   BaseName = "File"
 			#   VersionIndex = "v"
@@ -165,13 +198,8 @@ Function GetFileMap($filePathList) {
 				$remotionCountdown = [int]$Matches.RemotionCountdown;
 			}
 			# Valor
-			$allFilesMap.Get($baseName).Get($versionIndex).Set($remotionCountdown, ([PSCustomObject]@{
-				Path = $filePath;
-				BaseName = $Matches.BaseName;
-				VersionIndex = $versionIndex;
-				RemotionCountdown = $remotionCountdown;
-				Extension = $Matches.Extension;
-			}));
+			$newFile = (NewFileItem $filePath $Matches.BaseName $versionIndex $remotionCountdown $Matches.Extension);
+			$allFilesMap.Get($baseName).Get($versionIndex).Set($remotionCountdown, $newFile);
 		}
 	}
 	# Ordena a lista
@@ -180,10 +208,20 @@ Function GetFileMap($filePathList) {
 	Return $sortedFileMap;
 }
 
+Function NewFileItem($filePath, $baseName, $versionIndex, $remotionCountdown, $extension) {
+	Return [PSCustomObject]@{
+		Path = $filePath;
+		BaseName = $baseName;
+		VersionIndex = $versionIndex;
+		RemotionCountdown = $remotionCountdown;
+		Extension = $extension;
+	};
+}
+
 # Ordena um filemap dado
 Function GetSortedFileMap($fileMap) {
 	$sortedFileMap = [FileMap]::new();
-	ForEach($nameKey In @($fileMap.List())) {
+	ForEach($nameKey In @($fileMap.List())) { # @() para "não modificar a lista original"(Como a lista original é modificada???)
 		ForEach($versionKey In ($fileMap.Get($nameKey).List() | Sort-Object -Descending)) {
 			ForEach($remotionKey In ($fileMap.Get($nameKey).Get($versionKey).List() | Sort-Object -Descending)) {
 				$fileItem = $fileMap.Get($nameKey).Get($versionKey).Get($remotionKey);

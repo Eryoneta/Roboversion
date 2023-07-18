@@ -5,7 +5,7 @@
 #       Este toma $maxVersionLimit, e o anterior toma $maxVersionLimit-1, etc
 #       O que tiver "_version[0]" é deletado
 #     Dessa forma, existem apenas versões de 1 até $maxVersionLimit
-Function UpdateToVersion($modifiedFilesMap, $toModifyList, $maxVersionLimit, $listOnly) {
+Function UpdateToVersion($modifiedFilesMap, $toVersionList, $maxVersionLimit, $listOnly) {
 	If($maxVersionLimit -eq 0) {
 		# Com 0, não deve fazer nada
 		PrintText ("`tNenhuma ação necessária");
@@ -14,9 +14,9 @@ Function UpdateToVersion($modifiedFilesMap, $toModifyList, $maxVersionLimit, $li
 	$filesToDelete = [System.Collections.ArrayList]::new();
 	$filesToRename = [System.Collections.ArrayList]::new();
 	$filesToCopy = [System.Collections.ArrayList]::new();
-	ForEach($toModifyFile In $toModifyList) {
+	ForEach($toVersionFile In $toVersionList) {
 		# Copia o a-ser-versionado, renomeando duplicatas, se houver
-		UpdateToVersion_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $toModifyFile $maxVersionLimit $True;
+		UpdateToVersion_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $toVersionFile $maxVersionLimit $True;
 	}
 	# Output
 	If($filesToDelete.Count -eq 0 -And $filesToRename.Count -eq 0 -And $filesToCopy.Count -eq 0) {

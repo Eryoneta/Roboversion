@@ -503,30 +503,27 @@ Function Test_UpdateRemoved() {
 		("C:\Folder\SubFolder\File.ext", -1, 12),
 		(""));
 	If(-Not $sucess) { $sucessAll = $False; }
-
-
 	# PrintText ('TEST: Dest(P_r3(F_v1_r2(A), F_r2(B))) --($remotionCountdown=3,$destructive)--> Dest(P_r2(F_v1_r1(A), F_r1(B)))');
 	# PrintText ("'UpdateRemoved /R=3 /L': Deve atualizar a pasta e seus arquivos");
 	# $orderedMap = UpdateRemoved_Case ("",
-	# 	"C:\Folder\SubFolder\Pasta _removeIn[3]\File _removeIn[2].ext",
-	# 	"C:\Folder\SubFolder\Pasta _removeIn[3]\File _version[1] _removeIn[2].ext",
-	# 	"C:\Folder\SubFolder\Pasta _removeIn[3]",
+	# 	"C:\Folder\SubFolder\Pasta _removeIfEmpty",
+	# 	"C:\Folder\SubFolder\Pasta _removeIfEmpty\File _removeIn[2].ext",
+	# 	"C:\Folder\SubFolder\Pasta _removeIfEmpty\File _version[1] _removeIn[2].ext",
 	# 	"") 1 $False;
 	# # EchoFileMap $orderedMap;
 	# $sucess = TestFilePresence $orderedMap (
-	# 	("C:\Folder\SubFolder\Pasta", -1, 2),
-	# 	("C:\Folder\SubFolder\Pasta _removeIn[2]\File.ext", -1, 1),
-	# 	("C:\Folder\SubFolder\Pasta _removeIn[2]\File.ext", 1, 1),
+	# 	("C:\Folder\SubFolder\Pasta", -1, 0),
+	# 	("C:\Folder\SubFolder\Pasta _removeIfEmpty\File.ext", -1, 1),
+	# 	("C:\Folder\SubFolder\Pasta _removeIfEmpty\File.ext", 1, 1),
 	# 	("")) (
 	# 	(""));
 	# If(-Not $sucess) { $sucessAll = $False; }
-	#ERRO! Pastas removidas atualizam o path! ASDASDASDD
-
+	#   Não há como marcar um como uma pasta. "Pasta _removeIfEmpty" é visto com arquivo = Erro 
 	Return $sucessAll;
 }
 	Function UpdateRemoved_Case($filePathList, $remotionCountdown, $destructive) {
 		$orderedMap = GetFileMap $filePathList;
-		$orderedMap = UpdateRemoved $orderedMap $remotionCountdown $destructive $True;
+		$orderedMap = UpdateRemoved $orderedMap $Null $remotionCountdown $destructive $True;
 		Return $orderedMap;
 	}
 Function Test_UpdateModified() {
@@ -579,7 +576,7 @@ Function Test_UpdateModified() {
 	Function UpdateModified_Case($filePathList, $maxVersionLimit, $remotionCountdown, $destructive) {
 		$orderedMap = GetFileMap $filePathList;
 		$orderedMap = UpdateVersioned $orderedMap $maxVersionLimit $destructive $True;
-		$orderedMap = UpdateRemoved $orderedMap $remotionCountdown $destructive $True;
+		$orderedMap = UpdateRemoved $orderedMap $Null $remotionCountdown $destructive $True;
 		Return $orderedMap;
 	}
 Function Test_UpdateToVersion() {
@@ -727,17 +724,41 @@ Function Test_UpdateToVersion() {
 		("C:\Folder\SubFolder\File.ext", 2, -1),
 		(""));
 	If(-Not $sucess) { $sucessAll = $False; }
-	PrintText ('TEST: Orig(F(5))->Dest(');
-	PrintText ("`tF_v1_r5(11), F_v1(1),");
-	PrintText ("`tF_v2_r5(21), F_v2(2),");
-	PrintText ("`tF_v3_r5(31), F_v3(3),");
-	PrintText ("`tF(4)");
-	PrintText (') --($maxVersionLimit=3)--> Dest(');
-	PrintText ("`tF_v1_r5(11), F_v1(2),");
-	PrintText ("`tF_v2_r5(21), F_v2(3),");
-	PrintText ("`tF_v3_r5(31), F_v3(4),");
-	PrintText ("`tF(4)");
-	PrintText (')');
+	PrintText ('TEST: Orig(F(5))->Dest(`
+		F_v1_r5(11), F_v1(1),`
+		F_v2_r5(21), F_v2(2),`
+		F_v3_r5(31), F_v3(3),`
+		F(4)`
+	) --($maxVersionLimit=3)--> Dest(`
+		F_v1_r5(11), F_v1(2),`
+		F_v2_r5(21), F_v2(3),`
+		F_v3_r5(31), F_v3(4),`
+		F(4)`
+	)');
+	PrintText ("'UpdateToVersion /V=3 /L': Não deve ter conflito com removidos");
+	$orderedMap = UpdateToVersion_Case ("",
+		"C:\Folder\SubFolder\File _version[1] _removeIn[5].ext",
+		"C:\Folder\SubFolder\File _version[2] _removeIn[5].ext",
+		"C:\Folder\SubFolder\File _version[3] _removeIn[5].ext",
+		"C:\Folder\SubFolder\File _version[1].ext",
+		"C:\Folder\SubFolder\File _version[2].ext",
+		"C:\Folder\SubFolder\File _version[3].ext",
+		"C:\Folder\SubFolder\File.ext",
+		"") ("",
+		"C:\Folder\SubFolder\File.ext",
+		"") 3;
+	# EchoFileMap $orderedMap;
+	$sucess = TestFilePresence $orderedMap (
+		("C:\Folder\SubFolder\File.ext", -1, -1),
+		("C:\Folder\SubFolder\File.ext", 1, 5),
+		("C:\Folder\SubFolder\File.ext", 2, 5),
+		("C:\Folder\SubFolder\File.ext", 3, 5),
+		("C:\Folder\SubFolder\File.ext", 1, -1),
+		("C:\Folder\SubFolder\File.ext", 2, -1),
+		("C:\Folder\SubFolder\File.ext", 3, -1),
+		("")) (
+		(""));
+	If(-Not $sucess) { $sucessAll = $False; }
 	Return $sucessAll;
 }
 	Function UpdateToVersion_Case($filePathList, $filePathListToModify, $maxVersionLimit) {
@@ -847,7 +868,7 @@ Function Test_UpdateToRemove() {
 			$toModifyFile = $orderedMapToModify.Get($nameKey).Get(-1).Get(-1);
 			$Null = $toModifyList.Add($toModifyFile);
 		}
-		$orderedMap = UpdateToRemove $orderedMap $toModifyList $remotionCountdown $True;
+		$orderedMap = UpdateToRemove $orderedMap $toModifyList $Null $remotionCountdown $True;
 		Return $orderedMap;
 	}
 Function Test_UpdateToModify() {
@@ -911,7 +932,7 @@ Function Test_UpdateToModify() {
 			$Null = $toRemoveList.Add($toRemoveFile);
 		}
 		$orderedMap = UpdateToVersion $orderedMap $toModifyList $maxVersionLimit $True;
-		$orderedMap = UpdateToRemove $orderedMap $toRemoveList $remotionCountdown $True;
+		$orderedMap = UpdateToRemove $orderedMap $toRemoveList $Null $remotionCountdown $True;
 		Return $orderedMap;
 	}
 Function Test_RoboVersion_Input() {
@@ -985,10 +1006,6 @@ Function Test_RoboVersion_Input() {
 	Return $sucessAll;
 }
 Function Test_RoboVersion($rootPath) {
-
-				# . "./RoboVersion.ps1";
-				# $rootPath = "D:\ ";
-
 	$sucessAll = $True;
 	PrintText ("ATENÇÃO: Testes reais! Arquivos-testes serão criados!");
 	PrintText ("");
@@ -1014,12 +1031,12 @@ Function Test_RoboVersion($rootPath) {
 	$sucessAll = $True;
 	$sucessTest_RoboVersion_1 = Test_RoboVersion_1 $testOrigPath $testDestPath;
 	$sucessTest_RoboVersion_2 = Test_RoboVersion_2 $testOrigPath $testDestPath;
-	$sucessTest_RoboVersion_2 = Test_RoboVersion_3 $testOrigPath $testDestPath;
-	$sucessTest_RoboVersion_2 = Test_RoboVersion_4 $testOrigPath $testDestPath;
-	$sucessTest_RoboVersion_2 = Test_RoboVersion_5 $testOrigPath $testDestPath;
-	$sucessTest_RoboVersion_2 = Test_RoboVersion_6 $testOrigPath $testDestPath;
-	$sucessTest_RoboVersion_2 = Test_RoboVersion_7 $testOrigPath $testDestPath;
-	$sucessTest_RoboVersion_2 = Test_RoboVersion_8 $testOrigPath $testDestPath;
+	$sucessTest_RoboVersion_3 = Test_RoboVersion_3 $testOrigPath $testDestPath;
+	$sucessTest_RoboVersion_4 = Test_RoboVersion_4 $testOrigPath $testDestPath;
+	$sucessTest_RoboVersion_5 = Test_RoboVersion_5 $testOrigPath $testDestPath;
+	$sucessTest_RoboVersion_6 = Test_RoboVersion_6 $testOrigPath $testDestPath;
+	$sucessTest_RoboVersion_7 = Test_RoboVersion_7 $testOrigPath $testDestPath;
+	$sucessTest_RoboVersion_8 = Test_RoboVersion_8 $testOrigPath $testDestPath;
 	PrintText ("Test_RoboVersion_1 FUNCIONA: " + $sucessTest_RoboVersion_1);
 	PrintText ("Test_RoboVersion_2 FUNCIONA: " + $sucessTest_RoboVersion_2);
 	PrintText ("Test_RoboVersion_3 FUNCIONA: " + $sucessTest_RoboVersion_3);
@@ -1044,15 +1061,23 @@ Function Test_RoboVersion($rootPath) {
 }
 	Function NewFile($fileRootPath, $fileName, $fileContent) {
 		$dummyFilePath = (Join-Path -Path $fileRootPath -ChildPath $fileName);
-		$Null = New-Item $dummyFilePath;
+		$Null = New-Item -Path $dummyFilePath;
 		$Null = Set-Content -LiteralPath $dummyFilePath $fileContent;
 		Return $dummyFilePath;
+	}
+	Function NewFolder($folderRootPath, $folderName) {
+		$dummyFolderPath = (Join-Path -Path $folderRootPath -ChildPath $folderName);
+		$Null = New-Item -Path $dummyFolderPath -ItemType Directory;
+		Return $dummyFolderPath;
 	}
 	Function ModFile($filePath, $content) {
 		$Null = Set-Content -LiteralPath $filePath $content;
 	}
 	Function DelFile($filePath) {
-		$Null = Remove-Item -LiteralPath $filePath;
+		$Null = Remove-Item -LiteralPath $filePath -Recurse -Force;
+	}
+	Function DelFolder($folderPath) {
+		$Null = Remove-Item -LiteralPath $folderPath -Recurse -Force;
 	}
 	Function TestRealFilePresence($needsToHave, $cannotHave) {
 		$sucess = $True;
@@ -1091,7 +1116,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(New_F(A)) --(V=3,R=5)--> Dest(F(A))");
 	PrintText ("'RoboVersion /V=3 /R=5': Espelhamento básico de 1 arquivo");
 	$dummyFilePath = (NewFile $testOrigPath "FILE" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "A"),
 	("")) (
@@ -1100,7 +1125,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Mod_F(B)) --(V=3,R=5)--> Dest(F_v1(A), F(B))");
 	PrintText ("'RoboVersion /V=3 /R=5': 1º versionamento");
 	ModFile $dummyFilePath "B";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "B"),
 		($testDestPath, "FILE _version[1]", "A"),
@@ -1110,7 +1135,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Mod_F(C)) --(V=3,R=5)--> Dest(F_v1(A), F_v2(B), F(C))");
 	PrintText ("'RoboVersion /V=3 /R=5': 2º versionamento");
 	ModFile $dummyFilePath "C";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "C"),
 		($testDestPath, "FILE _version[2]", "B"),
@@ -1121,7 +1146,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Mod_F(D)) --(V=3,R=5)--> Dest(F_v1(A), F_v2(B), F_v3(C), F(D))");
 	PrintText ("'RoboVersion /V=3 /R=5': 3º versionamento");
 	ModFile $dummyFilePath "D";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "D"),
 		($testDestPath, "FILE _version[3]", "C"),
@@ -1133,7 +1158,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Mod_F(E)) --(V=3,R=5)--> Dest(F_v1(B), F_v2(C), F_v3(D), F(E))");
 	PrintText ("'RoboVersion /V=3 /R=5': 4º versionamento, removendo velhas versões");
 	ModFile $dummyFilePath "E";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "E"),
 		($testDestPath, "FILE _version[3]", "D"),
@@ -1147,7 +1172,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Mod_F(F)) --(V=3,R=5)--> Dest(F_v1(C), F_v2(D), F_v3(E), F(F))");
 	PrintText ("'RoboVersion /V=3 /R=5': 5º versionamento, removendo velhas versões");
 	ModFile $dummyFilePath "F";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "F"),
 		($testDestPath, "FILE _version[3]", "E"),
@@ -1161,7 +1186,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Del_F(F)) --(V=3,R=5)--> Dest(F_v1_r5(C), F_v2_r5(D), F_v3_r5(E), F_r5(F))");
 	PrintText ("'RoboVersion /V=3 /R=5': Remoção");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[5]", "F"),
 		($testDestPath, "FILE _version[3] _removeIn[5]", "E"),
@@ -1176,7 +1201,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_v1_r4(C), F_v2_r4(D), F_v3_r4(E), F_r4(F))");
 	PrintText ("'RoboVersion /V=3 /R=5': 1º countdown");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[4]", "F"),
 		($testDestPath, "FILE _version[3] _removeIn[4]", "E"),
@@ -1191,7 +1216,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_v1_r3(C), F_v2_r3(D), F_v3_r3(E), F_r3(F))");
 	PrintText ("'RoboVersion /V=3 /R=5': 2º countdown");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[3]", "F"),
 		($testDestPath, "FILE _version[3] _removeIn[3]", "E"),
@@ -1206,7 +1231,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_v1_r2(C), F_v2_r2(D), F_v3_r2(E), F_r2(F))");
 	PrintText ("'RoboVersion /V=3 /R=5': 3º countdown");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[2]", "F"),
 		($testDestPath, "FILE _version[3] _removeIn[2]", "E"),
@@ -1221,7 +1246,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_v1_r1(C), F_v2_r1(D), F_v3_r1(E), F_r1(F))");
 	PrintText ("'RoboVersion /V=3 /R=5': 4º countdown");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[1]", "F"),
 		($testDestPath, "FILE _version[3] _removeIn[1]", "E"),
@@ -1236,7 +1261,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_v1_r0(C), F_v2_r0(D), F_v3_r0(E), F_r0(F))");
 	PrintText ("'RoboVersion /V=3 /R=5': 5º countdown, o último");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[0]", "F"),
 		($testDestPath, "FILE _version[3] _removeIn[0]", "E"),
@@ -1251,7 +1276,7 @@ Function Test_RoboVersion_1($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest()");
 	PrintText ("'RoboVersion /V=3 /R=5': Deve deletar tudo!");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE _removeIn[0]", "F"),
@@ -1267,7 +1292,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(New_F(A)) --(V=3,R=5)--> Dest(F(A))");
 	PrintText ("'RoboVersion /V=3 /R=5': Deve espelhar");
 	$dummyFilePath = (NewFile $testOrigPath "FILE" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "A"),
 	("")) (
@@ -1276,7 +1301,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Mod_F(B)) --(V=3,R=5)--> Dest(F_v1(A), F(B))");
 	PrintText ("'RoboVersion /V=3 /R=5': 1º versão");
 	ModFile $dummyFilePath "B";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "B"),
 		($testDestPath, "FILE _version[1]", "A"),
@@ -1286,7 +1311,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Mod_F(C)) --(V=3,R=5)--> Dest(F_v1(A), F_v2(B), F(C))");
 	PrintText ("'RoboVersion /V=3 /R=5': 2º versão");
 	ModFile $dummyFilePath "C";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "C"),
 		($testDestPath, "FILE _version[2]", "B"),
@@ -1297,7 +1322,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Mod_F(D)) --(V=3,R=5)--> Dest(F_v1(A), F_v2(B), F_v3(C), F(D))");
 	PrintText ("'RoboVersion /V=3 /R=5': 3º versão");
 	ModFile $dummyFilePath "D";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "D"),
 		($testDestPath, "FILE _version[3]", "C"),
@@ -1309,7 +1334,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Del_F(D)) --(V=3,R=5)--> Dest(F_v1_r5(A), F_v2_r5(B), F_v3_r5(C), F_r5(D))");
 	PrintText ("'RoboVersion /V=3 /R=5': Remoção");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[5]", "D"),
 		($testDestPath, "FILE _version[3] _removeIn[5]", "C"),
@@ -1321,7 +1346,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(New_F(Z)) --(V=3,R=5)--> Dest(F_v1_r4(A), F_v2_r4(B), F_v3_r4(C), F_r4(D), F(Z))");
 	PrintText ("'RoboVersion /V=3 /R=5': 1º countdown, com espelhamento");
 	$dummyFilePath = (NewFile $testOrigPath "FILE" "Z");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "Z"),
 		($testDestPath, "FILE _removeIn[4]", "D"),
@@ -1334,7 +1359,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Mod_F(Y)) --(V=3,R=5)--> Dest(F_v1_r3(A), F_v2_r3(B), F_v3_r3(C), F_r3(D), F_v1(Z), F(Y))");
 	PrintText ("'RoboVersion /V=3 /R=5': 2º countdown, 1ª versão");
 	ModFile $dummyFilePath "Y";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "Y"),
 		($testDestPath, "FILE _version[1]", "Z"),
@@ -1348,7 +1373,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Mod_F(W)) --(V=3,R=5)--> Dest(F_v1_r2(A), F_v2_r2(B), F_v2_r2(C), F_r2(D), F_v1(Z), F_v2(Y), F(W))");
 	PrintText ("'RoboVersion /V=3 /R=5': 3º countdown, 2ª versão");
 	ModFile $dummyFilePath "W";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "W"),
 		($testDestPath, "FILE _version[2]", "Y"),
@@ -1363,7 +1388,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Del_F(W)) --(V=3,R=5)--> Dest(F_v1_r1(A), F_v2_r1(B), F_v1_r1(C), F_r1(D), F_v1_r5(Z), F_v2_r5(Y), F_r5(W))");
 	PrintText ("'RoboVersion /V=3 /R=5': 4º countdown, e remoção");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[5]", "W"),
 		($testDestPath, "FILE _version[2] _removeIn[5]", "Y"),
@@ -1377,7 +1402,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_v1_r0(A), F_v2_r0(B), F_v1_r0(C), F_r0(D), F_v1_r4(Z), F_v2_r4(Y), F_r4(W))");
 	PrintText ("'RoboVersion /V=3 /R=5': 5º countdown, o último, 1º countdown");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[4]", "W"),
 		($testDestPath, "FILE _version[2] _removeIn[4]", "Y"),
@@ -1391,7 +1416,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_v1_r3(Z), F_v2_r3(Y), F_r3(W))");
 	PrintText ("'RoboVersion /V=3 /R=5': Deletar os removidos, e 2º countdown");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[3]", "W"),
 		($testDestPath, "FILE _version[2] _removeIn[3]", "Y"),
@@ -1405,7 +1430,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_v1_r2(Z), F_v2_r2(Y), F_r2(W))");
 	PrintText ("'RoboVersion /V=3 /R=5': 3º countdown");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[2]", "W"),
 		($testDestPath, "FILE _version[2] _removeIn[2]", "Y"),
@@ -1415,7 +1440,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_v1_r1(Z), F_v2_r1(Y), F_r1(W))");
 	PrintText ("'RoboVersion /V=3 /R=5': 4º countdown");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[1]", "W"),
 		($testDestPath, "FILE _version[2] _removeIn[1]", "Y"),
@@ -1425,7 +1450,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_v1_r0(Z), F_v2_r0(Y), F_r0(W))");
 	PrintText ("'RoboVersion /V=3 /R=5': 5º countdown, o último");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[0]", "W"),
 		($testDestPath, "FILE _version[2] _removeIn[0]", "Y"),
@@ -1435,7 +1460,7 @@ Function Test_RoboVersion_2($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest()");
 	PrintText ("'RoboVersion /V=3 /R=5': Deletar os removidos");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE _removeIn[0]", "W"),
@@ -1451,7 +1476,7 @@ Function Test_RoboVersion_3($testOrigPath, $testDestPath) {
 	PrintText ("");
 	PrintText ("TEST: Orig(New_F(A)) --(V=3,R=5)--> Dest(F(A))");
 	$dummyFilePath = (NewFile $testOrigPath "FILE" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "A"),
 	("")) (
@@ -1459,23 +1484,23 @@ Function Test_RoboVersion_3($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_F(A)) --(V=3,R=5)--> Dest(F_r5(A))");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[5]", "A"),
 	("")) (
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_r4(A))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[4]", "A"),
 	("")) (
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Dest(Ren_F_r7(A), Orig(New_F(Z))) --(V=3,R=5)--> Dest(F_r6(A), F(Z))");
-	Rename-Item -LiteralPath ((Join-Path -Path $testDestPath -ChildPath "FILE _removeIn[4]")) -NewName "FILE _removeIn[7]" -Force;
+	$Null = Rename-Item -LiteralPath ((Join-Path -Path $testDestPath -ChildPath "FILE _removeIn[4]")) -NewName "FILE _removeIn[7]" -Force;
 	$dummyFilePath = (NewFile $testOrigPath "FILE" "Z");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[6]", "A"),
 		($testDestPath, "FILE", "Z"),
@@ -1485,7 +1510,7 @@ Function Test_RoboVersion_3($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(Del_F(Z))) --(V=3,R=5)--> Dest(F_r4(A), F_r5(Z))");
 	PrintText ("(r6 se torna r4, com o r5 sendo ocupado pelo novo removido)");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[4]", "A"),
 		($testDestPath, "FILE _removeIn[5]", "Z"),
@@ -1493,7 +1518,7 @@ Function Test_RoboVersion_3($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_r3(A), F_r4(Z))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[3]", "A"),
 		($testDestPath, "FILE _removeIn[4]", "Z"),
@@ -1501,7 +1526,7 @@ Function Test_RoboVersion_3($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_r2(A), F_r3(Z))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[2]", "A"),
 		($testDestPath, "FILE _removeIn[3]", "Z"),
@@ -1509,7 +1534,7 @@ Function Test_RoboVersion_3($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_r1(A), F_r2(Z))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[1]", "A"),
 		($testDestPath, "FILE _removeIn[2]", "Z"),
@@ -1517,7 +1542,7 @@ Function Test_RoboVersion_3($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_r0(A), F_r1(Z))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[0]", "A"),
 		($testDestPath, "FILE _removeIn[1]", "Z"),
@@ -1525,14 +1550,14 @@ Function Test_RoboVersion_3($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest(F_r0(Z))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[0]", "Z"),
 	("")) (
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=5)--> Dest()");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE _removeIn[0]", "Z"),
@@ -1546,7 +1571,7 @@ Function Test_RoboVersion_4($testOrigPath, $testDestPath) {
 	PrintText ("");
 	PrintText ("TEST: Orig(New_F(A)) --(V=3,R=1)--> Dest(F(A))");
 	$dummyFilePath = (NewFile $testOrigPath "FILE" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "A"),
 	("")) (
@@ -1554,7 +1579,7 @@ Function Test_RoboVersion_4($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_F(B)) --(V=3,R=1)--> Dest(F_v1(A), F(B))");
 	ModFile $dummyFilePath "B";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "B"),
 		($testDestPath, "FILE _version[1]", "A"),
@@ -1563,7 +1588,7 @@ Function Test_RoboVersion_4($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_F(C)) --(V=3,R=1)--> Dest(F_v1(A), F_v2(B), F(C))");
 	ModFile $dummyFilePath "C";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "C"),
 		($testDestPath, "FILE _version[2]", "B"),
@@ -1572,9 +1597,9 @@ Function Test_RoboVersion_4($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Dest(Ren_F_v3(A)), Orig(Mod_F(D)) --(V=3,R=1)--> Dest(F_v1(B), F_v2(A), F_v3(C), F(D))");
-	Rename-Item -LiteralPath ((Join-Path -Path $testDestPath -ChildPath "FILE _version[1]")) -NewName "FILE _version[3]" -Force;
+	$Null = Rename-Item -LiteralPath ((Join-Path -Path $testDestPath -ChildPath "FILE _version[1]")) -NewName "FILE _version[3]" -Force;
 	ModFile $dummyFilePath "D";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "D"),
 		($testDestPath, "FILE _version[3]", "C"),
@@ -1585,7 +1610,7 @@ Function Test_RoboVersion_4($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_F(D)) --(V=3,R=1)--> Dest(F_v1_r1(B), F_v2_r1(A), F_v3_r1(C), F_r1(D))");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[1]", "D"),
 		($testDestPath, "FILE _version[3] _removeIn[1]", "C"),
@@ -1595,7 +1620,7 @@ Function Test_RoboVersion_4($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1)--> Dest(F_v1_r0(B), F_v2_r0(A), F_v3_r0(C), F_r0(D))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[0]", "D"),
 		($testDestPath, "FILE _version[3] _removeIn[0]", "C"),
@@ -1605,7 +1630,7 @@ Function Test_RoboVersion_4($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1)--> Dest()");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE _removeIn[0]", "D"),
@@ -1622,7 +1647,7 @@ Function Test_RoboVersion_5($testOrigPath, $testDestPath) {
 	PrintText ("");
 	PrintText ("TEST: Orig(New_F(A)) --(V=3,R=1)--> Dest(F(A))");
 	$dummyFilePath = (NewFile $testOrigPath "FILE" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "A"),
 	("")) (
@@ -1630,7 +1655,7 @@ Function Test_RoboVersion_5($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_F(B)) --(V=3,R=1)--> Dest(F_v1(A), F(B))");
 	ModFile $dummyFilePath "B";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "B"),
 		($testDestPath, "FILE _version[1]", "A"),
@@ -1639,7 +1664,7 @@ Function Test_RoboVersion_5($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_F(C)) --(V=3,R=1)--> Dest(F_v1(A), F_v2(B), F(C))");
 	ModFile $dummyFilePath "C";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "C"),
 		($testDestPath, "FILE _version[2]", "B"),
@@ -1649,7 +1674,7 @@ Function Test_RoboVersion_5($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_F(D)) --(V=3,R=1)--> Dest(F_v1(A), F_v2(B), F_v3(C), F(D))");
 	ModFile $dummyFilePath "D";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "D"),
 		($testDestPath, "FILE _version[3]", "C"),
@@ -1660,7 +1685,7 @@ Function Test_RoboVersion_5($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Dest(New_F_v5(Z)), Orig() --(V=3,R=1)--> Dest(F_v1(A), F_v2(B), F_v3(C), F(D), F_v5(Z))");
 	$extraDummyFilePath = (NewFile $testDestPath "FILE _version[5]" "Z");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _version[5]", "Z"),
 		($testDestPath, "FILE", "D"),
@@ -1672,7 +1697,7 @@ Function Test_RoboVersion_5($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Dest(New_F_v6(Y)), Orig() --(V=3,R=1)--> Dest(F_v1(A), F_v2(B), F_v3(C), F(D), F_v5(Z), F_v6(Y))");
 	$extraDummyFilePath = (NewFile $testDestPath "FILE _version[6]" "Y");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _version[6]", "Y"),
 		($testDestPath, "FILE _version[5]", "Z"),
@@ -1685,7 +1710,7 @@ Function Test_RoboVersion_5($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1,D)--> Dest(F_v1(C), F_v2(Z), F_v3(Y), F(D))");
 	PrintText ("(v6 se torna v3, v5 se torna v2, e v3 se torna v1, o resto sendo deletado)");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1 -D;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1 -D;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _version[3]", "Y"),
 		($testDestPath, "FILE _version[2]", "Z"),
@@ -1695,7 +1720,7 @@ Function Test_RoboVersion_5($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=0,R=1,D)--> Dest(F(D))");
-	Roboversion $testOrigPath $testDestPath -V 0 -R 1 -D;
+	$Null = Roboversion $testOrigPath $testDestPath -V 0 -R 1 -D;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "D"),
 	("")) (
@@ -1703,7 +1728,7 @@ Function Test_RoboVersion_5($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_F(D)) --(V=3,R=1)--> Dest(F_r1(D))");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1 -D;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1 -D;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[1]", "D"),
 	("")) (
@@ -1711,14 +1736,14 @@ Function Test_RoboVersion_5($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1)--> Dest(F_r0(D))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1 -D;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1 -D;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[0]", "D"),
 	("")) (
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1)--> Dest()");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1 -D;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1 -D;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE _removeIn[0]", "D"),
@@ -1732,7 +1757,7 @@ Function Test_RoboVersion_6($testOrigPath, $testDestPath) {
 	PrintText ("");
 	PrintText ("TEST: Orig(New_F(A)) --(V=3,R=5)--> Dest(F(A))");
 	$dummyFilePath = (NewFile $testOrigPath "FILE" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "A"),
 	("")) (
@@ -1740,7 +1765,7 @@ Function Test_RoboVersion_6($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_F(A)) --(V=3,R=5)--> Dest(F_r5(A))");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[5]", "A"),
 	("")) (
@@ -1751,7 +1776,7 @@ Function Test_RoboVersion_6($testOrigPath, $testDestPath) {
 	$dummyFilePath = (NewFile $testDestPath "FILE _removeIn[7]" "Y");
 	$dummyFilePath = (NewFile $testDestPath "FILE _removeIn[8]" "X");
 	$dummyFilePath = (NewFile $testDestPath "FILE _removeIn[9]" "W");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 5 -D;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 5 -D;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE _removeIn[5]", "W"),
 		($testDestPath, "FILE _removeIn[4]", "X"),
@@ -1762,7 +1787,7 @@ Function Test_RoboVersion_6($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=0,D)--> Dest()");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 0 -D;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 0 -D;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE _removeIn[5]", "W"),
@@ -1780,7 +1805,7 @@ Function Test_RoboVersion_6($testOrigPath, $testDestPath) {
 	PrintText ("");
 	PrintText ("TEST: Orig(New_F(A)) --(V=5,R=1)--> Dest(F(A))");
 	$dummyFilePath = (NewFile $testOrigPath "FILE" "A");
-	Roboversion $testOrigPath $testDestPath -V 5 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 5 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "A"),
 	("")) (
@@ -1789,7 +1814,7 @@ Function Test_RoboVersion_6($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Dest(New_F_v3(Z)), Orig(Mod_F(B)) --(V=5,R=1)--> Dest(F_v3(Z), F_v4(A), F(B))");
 	$extraDummyFilePath = (NewFile $testDestPath "FILE _version[3]" "Z");
 	ModFile $dummyFilePath "B";
-	Roboversion $testOrigPath $testDestPath -V 5 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 5 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "B"),
 		($testDestPath, "FILE _version[4]", "A"),
@@ -1799,7 +1824,7 @@ Function Test_RoboVersion_6($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_F(C)) --(V=5,R=1)--> Dest(F_v3(Z), F_v4(A), F_v5(B), F(C))");
 	ModFile $dummyFilePath "C";
-	Roboversion $testOrigPath $testDestPath -V 5 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 5 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "C"),
 		($testDestPath, "FILE _version[5]", "B"),
@@ -1810,7 +1835,7 @@ Function Test_RoboVersion_6($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_F(D)) --(V=5,R=1)--> Dest(F_v2(Z), F_v3(A), F_v4(B), F_v5(C), F(D))");
 	ModFile $dummyFilePath "D";
-	Roboversion $testOrigPath $testDestPath -V 5 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 5 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "D"),
 		($testDestPath, "FILE _version[5]", "C"),
@@ -1822,7 +1847,7 @@ Function Test_RoboVersion_6($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_F(E)) --(V=5,R=1)--> Dest(F_v1(Z), F_v2(A), F_v3(B), F_v4(C), F_v5(D), F(E))");
 	ModFile $dummyFilePath "E";
-	Roboversion $testOrigPath $testDestPath -V 5 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 5 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "E"),
 		($testDestPath, "FILE _version[5]", "D"),
@@ -1835,7 +1860,7 @@ Function Test_RoboVersion_6($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_F(F)) --(V=5,R=1)--> Dest(F_v1(A), F_v2(B), F_v3(C), F_v4(D), F_v5(E), F(F))");
 	ModFile $dummyFilePath "F";
-	Roboversion $testOrigPath $testDestPath -V 5 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 5 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "FILE", "F"),
 		($testDestPath, "FILE _version[5]", "E"),
@@ -1848,7 +1873,7 @@ Function Test_RoboVersion_6($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_F(F)) --(V=0,R=0,D)--> Dest()");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 0 -R 0 -D;
+	$Null = Roboversion $testOrigPath $testDestPath -V 0 -R 0 -D;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE", "F"),
@@ -1866,9 +1891,8 @@ Function Test_RoboVersion_7($testOrigPath, $testDestPath) {
 	PrintText ("TEST BATCH: Sub-Pastas");
 	PrintText ("");
 	PrintText ("TEST: Orig(New_P()) --(V=3,R=3)--> Dest(P())");
-	$dummyFolderPath = (Join-Path -Path $testOrigPath -ChildPath "P");
-	$Null = New-Item -Path $dummyFolderPath -ItemType Directory;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$dummyFolderPath = (NewFolder $testOrigPath "P");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "P", ""),
 	("")) (
@@ -1876,16 +1900,16 @@ Function Test_RoboVersion_7($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(P(New_F(A))) --(V=3,R=3)--> Dest(P(F(A)))");
 	$dummyFilePath = (NewFile $dummyFolderPath "FILE" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "P", ""),
-		($testDestPath, "P/FILE", ""),
+		($testDestPath, "P/FILE", "A"),
 	("")) (
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(P(Mod_F(B))) --(V=3,R=3)--> Dest(P(F_v1(A), F(B)))");
 	ModFile $dummyFilePath "B";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "P", ""),
 		($testDestPath, "P/FILE", "B"),
@@ -1895,7 +1919,7 @@ Function Test_RoboVersion_7($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(P(Del_F(B))) --(V=3,R=3)--> Dest(P(F_v1_r3(A), F_r3(B)))");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "P", ""),
 		($testDestPath, "P/FILE _removeIn[3]", "B"),
@@ -1903,48 +1927,265 @@ Function Test_RoboVersion_7($testOrigPath, $testDestPath) {
 	("")) (
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
-	PrintText ("TEST: Orig(Del_P()) --(V=3,R=3)--> Dest(P_r3(F_v1_r2(A), F_r2(B)))");
-	$Null = Remove-Item -LiteralPath $dummyFolderPath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	PrintText ("TEST: Orig(Del_P()) --(V=3,R=3)--> Dest(P_r(F_v1_r2(A), F_r2(B)))");
+	DelFolder $dummyFolderPath;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
 	$sucess = TestRealFilePresence (
-		($testDestPath, "P _removeIn[3]", ""),
-		($testDestPath, "P _removeIn[3]/FILE _removeIn[2]", "B"),
-		($testDestPath, "P _removeIn[3]/FILE _version[1] _removeIn[2]", "A"),
+		($testDestPath, "P _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/FILE _removeIn[2]", "B"),
+		($testDestPath, "P _removeIfEmpty/FILE _version[1] _removeIn[2]", "A"),
 	("")) (
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
-	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest(P_r2(F_v1_r1(A), F_r1(B)))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest(P_r(F_v1_r1(A), F_r1(B)))");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
 	$sucess = TestRealFilePresence (
-		($testDestPath, "P _removeIn[2]", ""),
-		($testDestPath, "P _removeIn[2]/FILE _removeIn[1]", "B"),
-		($testDestPath, "P _removeIn[2]/FILE _version[1] _removeIn[1]", "A"),
+		($testDestPath, "P _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/FILE _removeIn[1]", "B"),
+		($testDestPath, "P _removeIfEmpty/FILE _version[1] _removeIn[1]", "A"),
 	("")) (
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
-	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest(P_r1(F_v1_r0(A), F_r0(B)))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest(P_r(F_v1_r0(A), F_r0(B)))");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
 	$sucess = TestRealFilePresence (
-		($testDestPath, "P _removeIn[1]", ""),
-		($testDestPath, "P _removeIn[1]/FILE _removeIn[0]", "B"),
-		($testDestPath, "P _removeIn[1]/FILE _version[1] _removeIn[0]", "A"),
+		($testDestPath, "P _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/FILE _removeIn[0]", "B"),
+		($testDestPath, "P _removeIfEmpty/FILE _version[1] _removeIn[0]", "A"),
 	("")) (
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
-	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest(P_r0())");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest(P_r())");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
 	$sucess = TestRealFilePresence (
-		($testDestPath, "P _removeIn[0]", ""),
+		($testDestPath, "P _removeIfEmpty", ""),
 	("")) (
-		($testDestPath, "P _removeIn[0]/FILE _removeIn[0]", "B"),
-		($testDestPath, "P _removeIn[0]/FILE _version[1] _removeIn[0]", "A"),
+		($testDestPath, "P _removeIfEmpty/FILE _removeIn[0]", "B"),
+		($testDestPath, "P _removeIfEmpty/FILE _version[1] _removeIn[0]", "A"),
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest()");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
 	$sucess = TestRealFilePresence (
 	("")) (
-		($testDestPath, "P _removeIn[0]", ""),
+		($testDestPath, "P _removeIfEmpty", ""),
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("==============================================");
+	PrintText ("TEST: Orig(New_P()) --(V=3,R=3)--> Dest(P())");
+	$dummyFolderPath = (NewFolder $testOrigPath "P");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P", ""),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig(P(New_F(A))) --(V=3,R=3)--> Dest(P(F(A)))");
+	$dummyFilePath = (NewFile $dummyFolderPath "FILE" "A");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P", ""),
+		($testDestPath, "P/FILE", "A"),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig(P(Mod_F(B))) --(V=3,R=3)--> Dest(P(F_v1(A),F(B)))");
+	ModFile $dummyFilePath "B";
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P", ""),
+		($testDestPath, "P/FILE", "B"),
+		($testDestPath, "P/FILE _version[1]", "A"),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig(P(Del_F(B))) --(V=3,R=1)--> Dest(P(F_v1_r1(A),F_r1(B)))");
+	DelFile $dummyFilePath;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P", ""),
+		($testDestPath, "P/FILE _removeIn[1]", "B"),
+		($testDestPath, "P/FILE _version[1] _removeIn[1]", "A"),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig(P()) --(V=3,R=3)--> Dest(P(F_v1_r0(A),F_r0(B)))");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P", ""),
+		($testDestPath, "P/FILE _removeIn[0]", "B"),
+		($testDestPath, "P/FILE _version[1] _removeIn[0]", "A"),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig(P()) --(V=3,R=3)--> Dest(P())");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P", ""),
+	("")) (
+		($testDestPath, "P/FILE _removeIn[0]", "B"),
+		($testDestPath, "P/FILE _version[1] _removeIn[0]", "A"),
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig(Del_P()) --(V=3,R=3)--> Dest(P_r())");
+	DelFolder $dummyFolderPath;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P _removeIfEmpty", ""),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest()");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+	("")) (
+		($testDestPath, "P _removeIfEmpty", ""),
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("==============================================");
+	PrintText ("TEST: Orig(New_P()) --(V=3,R=3)--> Dest(P())");
+	$dummyFolderPath_1 = (NewFolder $testOrigPath "P");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P", ""),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig(P(New_PF(AA),New_PP())) --(V=3,R=3)--> Dest(P(PF(AA),PP()))");
+	$dummyFolderPath_2 = (NewFolder $dummyFolderPath_1 "PP");
+	$dummyFilePath = (NewFile $dummyFolderPath_1 "PF" "AA");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P", ""),
+		($testDestPath, "P/PF", "AA"),
+		($testDestPath, "P/PP", ""),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig(P(PF(AA),PP(New_PPF(AAA),New_PPP()))) --(V=3,R=3)--> Dest(P(PF(AA),PP(PPF(AAA),PPP())))");
+	$dummyFolderPath_3 = (NewFolder $dummyFolderPath_2 "PPP");
+	$dummyFilePath = (NewFile $dummyFolderPath_2 "PPF" "AAA");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P", ""),
+		($testDestPath, "P/PF", "AA"),
+		($testDestPath, "P/PP", ""),
+		($testDestPath, "P/PP/PPF", "AAA"),
+		($testDestPath, "P/PP/PPP", ""),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig(P(PF(AA),PP(PPF(AAA),PPP(New_PPPF(AAAA))))) --(V=3,R=3)--> Dest(P(PF(AA),PP(PPF(AAA),PPP(PPPF(AAAA)))))");
+	$dummyFilePath = (NewFile $dummyFolderPath_3 "PPPF" "AAAA");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P", ""),
+		($testDestPath, "P/PF", "AA"),
+		($testDestPath, "P/PP", ""),
+		($testDestPath, "P/PP/PPF", "AAA"),
+		($testDestPath, "P/PP/PPP", ""),
+		($testDestPath, "P/PP/PPP/PPPF", "AAAA"),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig(P(PF(AA),PP(PPF(AAA),PPP(Mod_PPPF(BBBB))))) --(V=3,R=3)--> Dest(P(PF(AA),PP(PPF(AAA),PPP(PPPF_v1(AAAA),PPPF(BBBB)))))");
+	ModFile $dummyFilePath "BBBB";
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P", ""),
+		($testDestPath, "P/PF", "AA"),
+		($testDestPath, "P/PP", ""),
+		($testDestPath, "P/PP/PPF", "AAA"),
+		($testDestPath, "P/PP/PPP", ""),
+		($testDestPath, "P/PP/PPP/PPPF _version[1]", "AAAA"),
+		($testDestPath, "P/PP/PPP/PPPF", "BBBB"),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig(P(PF(AA),PP(PPF(AAA),PPP(Del_PPPF(BBBB))))) --(V=3,R=3)--> Dest(P(PF(AA),PP(PPF(AAA),PPP(PPPF_v1_r3(AAAA),PPPF_r3(BBBB)))))");
+	DelFile $dummyFilePath;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P", ""),
+		($testDestPath, "P/PF", "AA"),
+		($testDestPath, "P/PP", ""),
+		($testDestPath, "P/PP/PPF", "AAA"),
+		($testDestPath, "P/PP/PPP", ""),
+		($testDestPath, "P/PP/PPP/PPPF _version[1] _removeIn[3]", "AAAA"),
+		($testDestPath, "P/PP/PPP/PPPF _removeIn[3]", "BBBB"),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig(Del_P(PF(AA),PP(PPF(AAA),PPP()))) --(V=3,R=3)--> Dest(P_r(PF_r3(AA),PP_r(PPF_r3(AAA),PPP_r(PPPF_v1_r2(AAAA),PPPF_r2(BBBB)))))");
+	DelFolder $dummyFolderPath_1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PF _removeIn[3]", "AA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPF _removeIn[3]", "AAA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty/PPPF _version[1] _removeIn[2]", "AAAA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty/PPPF _removeIn[2]", "BBBB"),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest(P_r(PF_r2(AA),PP_r(PPF_r2(AAA),PPP_r(PPPF_v1_r1(AAAA),PPPF_r1(BBBB)))))");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PF _removeIn[2]", "AA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPF _removeIn[2]", "AAA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty/PPPF _version[1] _removeIn[1]", "AAAA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty/PPPF _removeIn[1]", "BBBB"),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest(P_r(PF_r1(AA),PP_r(PPF_r1(AAA),PPP_r(PPPF_v1_r0(AAAA),PPPF_r0(BBBB)))))");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PF _removeIn[1]", "AA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPF _removeIn[1]", "AAA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty/PPPF _version[1] _removeIn[0]", "AAAA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty/PPPF _removeIn[0]", "BBBB"),
+	("")) (
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest(P_r(PF_r0(AA),PP_r(PPF_r0(AAA),PPP_r())))");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PF _removeIn[0]", "AA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPF _removeIn[0]", "AAA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty", ""),
+	("")) (
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty/PPPF _version[1] _removeIn[0]", "AAAA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty/PPPF _removeIn[0]", "BBBB"),
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest(P_r(PP_r()))");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+		($testDestPath, "P _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty", ""),
+	("")) (
+		($testDestPath, "P _removeIfEmpty/PF _removeIn[0]", "AA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPF _removeIn[0]", "AAA"),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty/PPP _removeIfEmpty", ""),
+	(""));
+	If(-Not $sucess) { $sucessAll = $False; }
+	PrintText ("TEST: Orig() --(V=3,R=3)--> Dest()");
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 3;
+	$sucess = TestRealFilePresence (
+	("")) (
+		($testDestPath, "P _removeIfEmpty", ""),
+		($testDestPath, "P _removeIfEmpty/PP _removeIfEmpty", ""),
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	Return $sucessAll;
@@ -1955,7 +2196,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	PrintText ("");
 	PrintText ("TEST: Orig(New_`".file`"(A)) --(V=3,R=1)--> Dest(`".file`"(A))");
 	$dummyFilePath = (NewFile $testOrigPath ".file" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, ".file", "A"),
 	("")) (
@@ -1963,7 +2204,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_`".file`"(B)) --(V=3,R=1)--> Dest(`"_v1.file`"(A), `".file`"(B))");
 	ModFile $dummyFilePath "B";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, ".file", "B"),
 		($testDestPath, " _version[1].file", "A"),
@@ -1972,7 +2213,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_`".file`"(B)) --(V=3,R=1)--> Dest(`"_v1_r1.file`"(A), `"_r1.file`"(B))");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, " _removeIn[1].file", "B"),
 		($testDestPath, " _version[1] _removeIn[1].file", "A"),
@@ -1980,7 +2221,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1)--> Dest(`"_v1_r0.file`"(A), `"_r0.file`"(B))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, " _removeIn[0].file", "B"),
 		($testDestPath, " _version[1] _removeIn[0].file", "A"),
@@ -1988,7 +2229,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1)--> Dest()");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, " _removeIn[0].file", "B"),
@@ -1998,7 +2239,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	PrintText ("==============================================");
 	PrintText ("TEST: Orig(New_`"F _version[1]`"(A)) --(V=3,R=1)--> Dest()");
 	$dummyFilePath = (NewFile $testOrigPath "FILE _version[1]" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE _version[1]", "A"),
@@ -2006,7 +2247,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_`"F _version[1]`"(A)) --(V=3,R=1)--> Dest()");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE _version[1]", "A"),
@@ -2015,7 +2256,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	PrintText ("==============================================");
 	PrintText ("TEST: Orig(New_`"F _version[AAA]`"(A)) --(V=3,R=1)--> Dest()");
 	$dummyFilePath = (NewFile $testOrigPath "FILE _version[AAA]" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE _version[AAA]", "A"),
@@ -2023,7 +2264,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_`"F _version[AAA]`"(A)) --(V=3,R=1)--> Dest()");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE _version[AAA]", "A"),
@@ -2033,7 +2274,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(New_`"F.ext _version[1]`"(A)) --(V=3,R=1)--> Dest()");
 	PrintText ("(Infelizmente, o nome do arquivo não deve ter a tag em nenhuma posição)");
 	$dummyFilePath = (NewFile $testOrigPath "FILE.ext _version[1]" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE.ext _version[1]", "A"),
@@ -2041,7 +2282,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_`"F.ext _version[1]`"(A)) --(V=3,R=1)--> Dest()");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE.ext _version[1]", "A"),
@@ -2051,7 +2292,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	PrintText ("TEST: Orig(New_`"F.ext _removeIn[1]`"(A)) --(V=3,R=1)--> Dest()");
 	PrintText ("(Infelizmente, o nome do arquivo não deve ter a tag em nenhuma posição)");
 	$dummyFilePath = (NewFile $testOrigPath "FILE.ext _removeIn[1]" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE.ext _removeIn[1]", "A"),
@@ -2059,7 +2300,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_`"F.ext _removeIn[1]`"(A)) --(V=3,R=1)--> Dest()");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "FILE.ext _removeIn[1]", "A"),
@@ -2068,7 +2309,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	PrintText ("==============================================");
 	PrintText ("TEST: Orig(New_`"F-F+my+two.2.1_beta.ext`"(A)) --(V=3,R=1)--> Dest(`"F-F+my+two.2.1_beta.ext`"(A))");
 	$dummyFilePath = (NewFile $testOrigPath "F-F+my+two.2.1_beta.ext" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "F-F+my+two.2.1_beta.ext", "A"),
 	("")) (
@@ -2076,7 +2317,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_`"F-F+my+two.2.1_beta.ext`"(B)) --(V=3,R=1)--> Dest(`"F-F+my+two.2.1_beta_v1.ext`"(A), `"F-F+my+two.2.1_beta.ext`"(B))");
 	ModFile $dummyFilePath "B";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "F-F+my+two.2.1_beta.ext", "B"),
 		($testDestPath, "F-F+my+two.2.1_beta _version[1].ext", "A"),
@@ -2085,7 +2326,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_`"F-F+my+two.2.1_beta.ext`"(B)) --(V=3,R=1)--> Dest(`"F-F+my+two.2.1_beta_v1_r1.ext`"(A), `"F-F+my+two.2.1_beta_r1.ext`"(B))");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "F-F+my+two.2.1_beta _removeIn[1].ext", "B"),
 		($testDestPath, "F-F+my+two.2.1_beta _version[1] _removeIn[1].ext", "A"),
@@ -2093,7 +2334,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1)--> Dest(`"F-F+my+two.2.1_beta_v1_r0.ext`"(A), `"F-F+my+two.2.1_beta_r0.ext`"(B))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "F-F+my+two.2.1_beta _removeIn[0].ext", "B"),
 		($testDestPath, "F-F+my+two.2.1_beta _version[1] _removeIn[0].ext", "A"),
@@ -2101,7 +2342,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1)--> Dest()");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "F-F+my+two.2.1_beta _removeIn[0].ext", "B"),
@@ -2111,7 +2352,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	PrintText ("==============================================");
 	PrintText ("TEST: Orig(New_`"$%&#@!.;`^[]{}ºª=¨§`"(A)) --(V=3,R=1)--> Dest(`"$%&#@!.;`^[]{}ºª=¨§`"(A))");
 	$dummyFilePath = (NewFile $testOrigPath "$%&#@!.;`^[]{}ºª=¨§" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "$%&#@!.;`^[]{}ºª=¨§", "A"),
 	("")) (
@@ -2119,7 +2360,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_`"$%&#@!.;`^[]{}ºª=¨§`"(A)) --(V=3,R=1)--> Dest(`"$%&#@!_v1.;`^[]{}ºª=¨§`"(A), `"$%&#@!.;`^[]{}ºª=¨§`"(B))");
 	ModFile $dummyFilePath "B";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "$%&#@!.;`^[]{}ºª=¨§", "B"),
 		($testDestPath, "$%&#@! _version[1].;`^[]{}ºª=¨§", "A"),
@@ -2128,7 +2369,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_`"$%&#@!.;`^[]{}ºª=¨§`"(A)) --(V=3,R=1)--> Dest(`"$%&#@!_v1_r1.;`^[]{}ºª=¨§`"(A), `"$%&#@!_r1.;`^[]{}ºª=¨§`"(B))");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "$%&#@! _removeIn[1].;`^[]{}ºª=¨§", "B"),
 		($testDestPath, "$%&#@! _version[1] _removeIn[1].;`^[]{}ºª=¨§", "A"),
@@ -2136,7 +2377,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1)--> Dest(`"$%&#@!_v1_r0.;`^[]{}ºª=¨§`"(A), `"$%&#@!_r0.;`^[]{}ºª=¨§`"(B))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, "$%&#@! _removeIn[0].;`^[]{}ºª=¨§", "B"),
 		($testDestPath, "$%&#@! _version[1] _removeIn[0].;`^[]{}ºª=¨§", "A"),
@@ -2144,7 +2385,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1)--> Dest()");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, "$%&#@! _removeIn[0].;`^[]{}ºª=¨§", "B"),
@@ -2154,7 +2395,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	PrintText ("==============================================");
 	PrintText ("TEST: Orig(New_`" ˸`”ʔ∕`"(A)) --(V=3,R=1)--> Dest(`" ˸`”ʔ∕`"(A))");
 	$dummyFilePath = (NewFile $testOrigPath " ˸`”ʔ∕" "A");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, " ˸`”ʔ∕", "A"),
 	("")) (
@@ -2162,7 +2403,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Mod_`" ˸`”ʔ∕`"(B)) --(V=3,R=1)--> Dest(`" ˸`”ʔ∕_v1`"(A), `" ˸`”ʔ∕`"(B))");
 	ModFile $dummyFilePath "B";
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, " ˸`”ʔ∕", "B"),
 		($testDestPath, " ˸`”ʔ∕ _version[1]", "A"),
@@ -2171,7 +2412,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig(Del_`" ˸`”ʔ∕`"(B)) --(V=3,R=1)--> Dest(`" ˸`”ʔ∕_v1_r1`"(A), `" ˸`”ʔ∕_r1`"(B))");
 	DelFile $dummyFilePath;
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, " ˸`”ʔ∕ _removeIn[1]", "B"),
 		($testDestPath, " ˸`”ʔ∕ _version[1] _removeIn[1]", "A"),
@@ -2179,7 +2420,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1)--> Dest(`" ˸`”ʔ∕_v1_r0`"(A), `" ˸`”ʔ∕_r0`"(B))");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 		($testDestPath, " ˸`”ʔ∕ _removeIn[0]", "B"),
 		($testDestPath, " ˸`”ʔ∕ _version[1] _removeIn[0]", "A"),
@@ -2187,7 +2428,7 @@ Function Test_RoboVersion_8($testOrigPath, $testDestPath) {
 	(""));
 	If(-Not $sucess) { $sucessAll = $False; }
 	PrintText ("TEST: Orig() --(V=3,R=1)--> Dest()");
-	Roboversion $testOrigPath $testDestPath -V 3 -R 1;
+	$Null = Roboversion $testOrigPath $testDestPath -V 3 -R 1;
 	$sucess = TestRealFilePresence (
 	("")) (
 		($testDestPath, " ˸`”ʔ∕ _removeIn[0]", "B"),
@@ -2214,6 +2455,7 @@ Function Test_All() {
 	$sucessTest_RoboVersion = Test_RoboVersion $testAreaPath;
 	# Resultado
 	$sucessAll = $True;
+	PrintText ("=======================================================================");
 	PrintText ("Test_GetFileMap FUNCIONA: " + $sucessTest_GetFileMap);
 	PrintText ("Test_UpdateVersioned FUNCIONA: " + $sucessTest_UpdateVersioned);
 	PrintText ("Test_UpdateRemoved FUNCIONA: " + $sucessTest_UpdateRemoved);

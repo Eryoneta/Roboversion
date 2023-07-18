@@ -8,7 +8,7 @@ Function DeleteFilesList($modifiedFilesMap, $filesToDelete, $listOnly) {
 		# Deleta arquivo
 		PrintText ("`tDeleted`t" + $fileToDelete.Path);
 		If(-Not $listOnly) {
-			Remove-Item -LiteralPath $fileToDelete.Path -Recurse -Force;
+			$Null = Remove-Item -LiteralPath $fileToDelete.Path -Recurse -Force;
 		}
 		# Deleta no fileMap
 		$fileBasePath = (Split-Path -Path $fileToDelete.Path -Parent);
@@ -37,7 +37,7 @@ Function RenameRemovedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
 		PrintText ("`tRenamed`t" + $fileToRename.Path + " ---> " + $newName);
 		If(-Not $listOnly) {
-			Rename-Item -LiteralPath $fileToRename.Path -NewName $newName -Force;
+			$Null = Rename-Item -LiteralPath $fileToRename.Path -NewName $newName -Force;
 		}
 		# Renomeia no fileMap
 		$fileBasePath = (Split-Path -Path $fileToRename.Path -Parent);
@@ -69,7 +69,7 @@ Function RenameVersionedFilesList($modifiedFilesMap, $filesToRename, $listOnly) 
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
 		PrintText ("`tRenamed`t" + $fileToRename.Path + " ---> " + $newName);
 		If(-Not $listOnly) {
-			Rename-Item -LiteralPath $fileToRename.Path -NewName $newName -Force;
+			$Null = Rename-Item -LiteralPath $fileToRename.Path -NewName $newName -Force;
 		}
 		# Renomeia no fileMap
 		$fileBasePath = (Split-Path -Path $fileToRename.Path -Parent);
@@ -103,19 +103,14 @@ Function CopyVersionedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
 		$newPath = (Join-Path -Path $fileBasePath -ChildPath $newName);
 		PrintText ("`tCopied`t" + $fileToCopy.Path + " ---> " + $newPath);
 		If(-Not $listOnly) {
-			Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Recurse -Force;
+			$Null = Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force;
 		}
 		# Copia no fileMap
 		$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($fileToCopy.BaseName + $fileToCopy.Extension));
 		$versionKey = $newVersion;
 		$remotionKey = $fileToCopy.RemotionCountdown;
-		$modifiedFilesMap.Get($nameKey).Get($versionKey).Set($remotionKey, ([PSCustomObject]@{
-			Path = $newPath;
-			BaseName = $fileToCopy.BaseName;
-			VersionIndex = $newVersion;
-			RemotionCountdown = $fileToCopy.RemotionCountdown;
-			Extension = $fileToCopy.Extension;
-		}));
+		$newFile = (NewFileItem $newPath $fileToCopy.BaseName $newVersion $fileToCopy.RemotionCountdown $fileToCopy.Extension);
+		$modifiedFilesMap.Get($nameKey).Get($versionKey).Set($remotionKey, $newFile);
 	}
 }
 
@@ -133,24 +128,31 @@ Function CopyRemovedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
 		If($fileToCopy.VersionIndex -gt 0) {
 			$version = (" " + $versionStart + $fileToCopy.VersionIndex + $versionEnd);
 		}
-		$remotion = (" " + $remotionStart + $newRemotionCountdown + $remotionEnd);
+		$remotion = "";
+		$isFolder = (Test-Path -LiteralPath $fileToCopy.Path -PathType "Container");
+		If($isFolder) {
+			$remotion = (" " + $remotionFolder);
+		} Else {
+			$remotion = (" " + $remotionStart + $newRemotionCountdown + $remotionEnd);
+		}
 		$fileBasePath = (Split-Path -Path $fileToCopy.Path -Parent);
 		$newName = ($fileToCopy.BaseName + $version + $remotion + $fileToCopy.Extension);
 		$newPath = (Join-Path -Path $fileBasePath -ChildPath $newName);
 		PrintText ("`tCopied`t" + $fileToCopy.Path + " ---> " + $newPath);
 		If(-Not $listOnly) {
-			Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Recurse -Force;
+			If($isFolder) {
+				$Null = Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force;
+				$Null = (Get-ChildItem -LiteralPath $fileToCopy.Path -Filter $wildcardOfRemovedFile | Move-Item -Destination $newPath -Force);
+				$Null = (Get-ChildItem -LiteralPath $fileToCopy.Path -Filter $wildcardOfRemovedFolder | Move-Item -Destination $newPath -Force);
+			} Else {
+				$Null = Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force;
+			}
 		}
 		# Copia no fileMap
 		$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($fileToCopy.BaseName + $fileToCopy.Extension));
 		$versionKey = $fileToCopy.VersionIndex;
 		$remotionKey = $newRemotionCountdown;
-		$modifiedFilesMap.Get($nameKey).Get($versionKey).Set($remotionKey, ([PSCustomObject]@{
-			Path = $newPath;
-			BaseName = $fileToCopy.BaseName;
-			VersionIndex = $fileToCopy.VersionIndex;
-			RemotionCountdown = $newRemotionCountdown;
-			Extension = $fileToCopy.Extension;
-		}));
+		$newFile = (NewFileItem $newPath $fileToCopy.BaseName $fileToCopy.VersionIndex $newRemotionCountdown $fileToCopy.Extension);
+		$modifiedFilesMap.Get($nameKey).Get($versionKey).Set($remotionKey, $newFile);
 	}
 }

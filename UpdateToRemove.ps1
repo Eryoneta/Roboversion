@@ -5,7 +5,7 @@
 #       Ele recebe $remotionCountdown-1, e este recebe $remotionCountdown
 #       Se houver mais, todos trocam de r até o -1 ser removido
 #     Dessa forma, existem removidos apenas de $remotionCountdown até 0
-Function UpdateToRemove($modifiedFilesMap, $toRemoveList, $remotionCountdown, $listOnly) {
+Function UpdateToRemove($modifiedFilesMap, $toRemoveList, $toRemoveFolderList, $remotionCountdown, $listOnly) {
 	If($remotionCountdown -eq 0) {
 		# Com 0, não deve fazer nada
 		PrintText ("`tNenhuma ação necessária");
@@ -14,6 +14,7 @@ Function UpdateToRemove($modifiedFilesMap, $toRemoveList, $remotionCountdown, $l
 	$filesToDelete = [System.Collections.ArrayList]::new();
 	$filesToRename = [System.Collections.ArrayList]::new();
 	$filesToCopy = [System.Collections.ArrayList]::new();
+	$foldersToCopy = [System.Collections.ArrayList]::new();
 	ForEach($toRemoveFile In $toRemoveList) {
 		# Copia o a-ser-removido, renomeando duplicatas, se houver
 		UpdateToRemove_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $toRemoveFile $remotionCountdown $True;
@@ -35,6 +36,10 @@ Function UpdateToRemove($modifiedFilesMap, $toRemoveList, $remotionCountdown, $l
 			}
 		}
 	}
+	# Todas as pastas removidas devem ficar no final para não mudar o path dos arquivos
+	ForEach($toRemoveFolder In $toRemoveFolderList) {
+		UpdateToRemove_RenameOrDelete $modifiedFilesMap $filesToDelete $filesToRename $filesToCopy $toRemoveFolder $remotionCountdown $True;
+	}
 	# Output
 	If($filesToDelete.Count -eq 0 -And $filesToRename.Count -eq 0 -And $filesToCopy.Count -eq 0) {
 		PrintText ("`tNenhuma ação necessária");
@@ -48,6 +53,9 @@ Function UpdateToRemove($modifiedFilesMap, $toRemoveList, $remotionCountdown, $l
 	# Retorna mapa ordenado
 	$modifiedFilesMap = (GetSortedFileMap $modifiedFilesMap);
 	Return $modifiedFilesMap;
+	# PS:
+	#   O fileMap retornado não é mais equivalente aos arquivos reais. Arquivos de pastas removidas não tem os paths atualizados
+	#   Nada mais o usa, sem necessidade de conserto
 }
 	Function UpdateToRemove_RenameOrDelete($modifiedFilesMap, $filesToDelete, $filesToRename, $filesToCopy, $file, $newRemotionCountdown, $copy) {
 		# Deletar
@@ -56,17 +64,15 @@ Function UpdateToRemove($modifiedFilesMap, $toRemoveList, $remotionCountdown, $l
 			Return;
 		}
 		# Copiar, aplicando novo RemotionCountdown
+		$fileToCopy = [PSCustomObject]@{
+			File = $file;
+			NewRemotionCountdown = $newRemotionCountdown;
+		};
 		If($copy) {
-			$Null = $filesToCopy.Add([PSCustomObject]@{
-				File = $file;
-				NewRemotionCountdown = $newRemotionCountdown;
-			});
+			$Null = $filesToCopy.Add($fileToCopy);
 		# Renomear, aplicando novo com RemotionCountdown
 		} Else {
-			$Null = $filesToRename.Add([PSCustomObject]@{
-				File = $file;
-				NewRemotionCountdown = $newRemotionCountdown;
-			});
+			$Null = $filesToRename.Add($fileToCopy);
 		}
 		# Checar se não existe outro com mesmo RemotionCountdown
 		$fileBasePath = (Split-Path -Path $file.Path -Parent);

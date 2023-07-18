@@ -70,22 +70,27 @@ Function RoboVersion {
 	PrintText ("");
 	PrintText ("");
 	# Lista os arquivos versionados e removidos
-	$modifiedFilesMap = (GetModifiedFilesMap $DestPath $Threads);
+	$modifiedLists = (GetModifiedFilesMap $DestPath $Threads);
+	$modifiedFilesMap = $modifiedLists.ModifiedFilesMap;
+	$removedFoldersList = $modifiedLists.RemovedFoldersList;
 	# Atualiza os arquivos versionados e removidos em $DestPath
 	PrintText ("Etapa 1: Tratar arquivos versionados no destino");
 	$modifiedFilesMap = (UpdateVersioned $modifiedFilesMap $VersionLimit $Destructive $ListOnly);
 	PrintText ("");
 	PrintText ("Etapa 2: Tratar arquivos removidos no destino");
-	$modifiedFilesMap = (UpdateRemoved $modifiedFilesMap $RemotionCountdown $Destructive $ListOnly);
+	$modifiedFilesMap = (UpdateRemoved $modifiedFilesMap $removedFoldersList $RemotionCountdown $Destructive $ListOnly);
 	PrintText ("");
 	# Lista os arquivos a versionar ou remover
-	$toModifyLists = (GetToModifyFilesMap $OrigPath $DestPath $Threads);
+	$willModifyLists = (GetWillModifyFilesMap $OrigPath $DestPath $Threads);
+	$toVersionList = $willModifyLists.WillModifyList;
+	$toRemoveList = $willModifyLists.WillDeleteList;
+	$toRemoveFolderList = $willModifyLists.WillDeleteFolderList;
 	# Atualiza os arquivos a versionar ou remover em $DestPath
 	PrintText ("Etapa 3: Criar versões de arquivos modificados na origem");
-	$modifiedFilesMap = (UpdateToVersion $modifiedFilesMap $toModifyLists.ToModifyList $VersionLimit $ListOnly);
+	$modifiedFilesMap = (UpdateToVersion $modifiedFilesMap $toVersionList $VersionLimit $ListOnly);
 	PrintText ("");
 	PrintText ("Etapa 4: Criar remoções de arquivos deletados na origem");
-	$modifiedFilesMap = (UpdateToRemove $modifiedFilesMap $toModifyLists.ToDeleteList $RemotionCountdown $ListOnly);
+	$modifiedFilesMap = (UpdateToRemove $modifiedFilesMap $toRemoveList $toRemoveFolderList $RemotionCountdown $ListOnly);
 	PrintText ("");
 	PrintText ("Etapa 5: Iniciar Robocopy e realizar espelhamento");
 	# Realiza a cópia
@@ -97,7 +102,6 @@ Function RoboVersion {
 		/XF `
 			$wildcardOfVersionedFile `
 			$wildcardOfRemovedFile `
-			$wildcardOfVersionedAndRemovedFile `
 		/XD `
 			$wildcardOfRemovedFolder `
 		$list /NJH /NJS;

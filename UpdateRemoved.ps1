@@ -7,7 +7,7 @@
 #     Dessa forma, os que sobrarem são sempre nomeados de $remotionCountdown até 0, do mais novo ao mais antigo
 #   Se $destructive = $False:
 #     Todos serão eventualmente deletados conforme seus contadores atingem [0]
-Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $listOnly) {
+Function UpdateRemoved($modifiedFilesMap, $removedFolderList, $remotionCountdown, $destructive, $listOnly) {
 	If($remotionCountdown -eq 0) {
 		# Com 0, não deve manter removidos
 		$remotionCountdown = -1;
@@ -17,6 +17,11 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 	$filesToRename = [System.Collections.ArrayList]::new();
 	# Não-Destrutivo = Diminui o RemotionCountdown, e deleta os com RemotionCountdown igual a 0
 	If(-Not $destructive) {
+		ForEach($removedFolder In $removedFolderList) {
+			If(IsFolderEmpty $removedFolder.Path) {
+				$Null = $filesToDelete.Add($removedFolder);
+			}
+		}
 		ForEach($nameKey In $modifiedFilesMap.List()) {
 			ForEach($versionKey In $modifiedFilesMap.Get($nameKey).List()) {
 				ForEach($remotionKey In $modifiedFilesMap.Get($nameKey).Get($versionKey).List()) {
@@ -40,6 +45,11 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 		}
 	# Destrutivo = Aplica $remotionCountdown, listando arquivos para renomear ou deletar
 	} Else {
+		ForEach($removedFolder In $removedFolderList) {
+			If(IsFolderEmpty $removedFolder.Path) {
+				$Null = $filesToDelete.Add($removedFolder);
+			}
+		}
 		ForEach($nameKey In $modifiedFilesMap.List()) {
 			ForEach($versionKey In $modifiedFilesMap.Get($nameKey).List()) {
 				$unoccupiedRemotionCountdown = $remotionCountdown;
@@ -91,3 +101,6 @@ Function UpdateRemoved($modifiedFilesMap, $remotionCountdown, $destructive, $lis
 	$modifiedFilesMap = (GetSortedFileMap $modifiedFilesMap);
 	Return $modifiedFilesMap;
 }
+	Function IsFolderEmpty($folderPath) {
+		Return ((Get-ChildItem -LiteralPath $folderPath -File -Force | Select-Object -First 1 | Measure-Object).Count -eq 0);
+	}
