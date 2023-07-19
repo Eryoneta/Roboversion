@@ -60,13 +60,14 @@ Function RoboVersion {
 			[Alias("L", "LO")]
 			[switch] $ListOnly = $False
 	)
-	. "./FileMap.ps1";
-	. "./Functions.ps1";
-	. "./FileManager.ps1";
-	. "./UpdateVersioned.ps1";
-	. "./UpdateRemoved.ps1";
-	. "./UpdateToVersion.ps1";
-	. "./UpdateToRemove.ps1";
+	. "./Functions/FileMap.ps1";
+	. "./Functions/Functions.ps1";
+	. "./Functions/FileManager.ps1";
+	. "./Functions/UpdateVersioned.ps1";
+	. "./Functions/UpdateRemoved.ps1";
+	. "./Functions/UpdateToVersion.ps1";
+	. "./Functions/UpdateToRemove.ps1";
+	. "./Functions/Mirror.ps1";
 	PrintText ("");
 	PrintText ("");
 	# Lista os arquivos versionados e removidos
@@ -94,16 +95,6 @@ Function RoboVersion {
 	PrintText ("");
 	PrintText ("Etapa 5: Iniciar Robocopy e realizar espelhamento");
 	# Realiza a cópia
-	$list = "";
-	If($ListOnly) {
-		$list = "/L";
-	}
-	Robocopy $OrigPath $DestPath /MIR /SJ /SL /R:1 /W:0 /MT:$Threads `
-		/XF `
-			$wildcardOfVersionedFile `
-			$wildcardOfRemovedFile `
-		/XD `
-			$wildcardOfRemovedFolder `
-		$list /NJH /NJS;
+	Mirror $OrigPath $DestPath $Threads $ListOnly;
 	PrintText ("");
 }

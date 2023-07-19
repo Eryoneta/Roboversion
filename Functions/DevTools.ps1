@@ -1,4 +1,12 @@
-﻿# . "./RoboVersion.ps1";
+﻿. "../RoboVersion.ps1";
+. "../Functions/FileMap.ps1";
+. "../Functions/Functions.ps1";
+. "../Functions/FileManager.ps1";
+. "../Functions/UpdateVersioned.ps1";
+. "../Functions/UpdateRemoved.ps1";
+. "../Functions/UpdateToVersion.ps1";
+. "../Functions/UpdateToRemove.ps1";
+. "../Functions/Mirror.ps1";
 
 Function EchoFileMap($fileMap) {
 	If(-Not $fileMap) {
