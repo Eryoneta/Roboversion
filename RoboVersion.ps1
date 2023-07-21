@@ -60,20 +60,24 @@ Function RoboVersion {
 			[Alias("L", "LO")]
 			[switch] $ListOnly = $False
 	)
-	. "./Functions/FileMap.ps1";
-	. "./Functions/Functions.ps1";
-	. "./Functions/FileManager.ps1";
-	. "./Functions/UpdateVersioned.ps1";
-	. "./Functions/UpdateRemoved.ps1";
-	. "./Functions/UpdateToVersion.ps1";
-	. "./Functions/UpdateToRemove.ps1";
-	. "./Functions/Mirror.ps1";
+	. (Join-Path -Path $PSScriptRoot -ChildPath "\Functions\FileMap.ps1");
+	. (Join-Path -Path $PSScriptRoot -ChildPath "\Functions\Functions.ps1");
+	. (Join-Path -Path $PSScriptRoot -ChildPath "\Functions\FileManager.ps1");
+	. (Join-Path -Path $PSScriptRoot -ChildPath "\Functions\UpdateVersioned.ps1");
+	. (Join-Path -Path $PSScriptRoot -ChildPath "\Functions\UpdateRemoved.ps1");
+	. (Join-Path -Path $PSScriptRoot -ChildPath "\Functions\UpdateToVersion.ps1");
+	. (Join-Path -Path $PSScriptRoot -ChildPath "\Functions\UpdateToRemove.ps1");
+	. (Join-Path -Path $PSScriptRoot -ChildPath "\Functions\Mirror.ps1");
 	PrintText ("");
+	PrintText ("");
+	PrintText ("RoboVersion: " + $OrigPath + " ---> " + $DestPath);
 	PrintText ("");
 	# Lista os arquivos versionados e removidos
+	PrintText ("Escaneando por versionados e removidos...");
 	$modifiedLists = (GetModifiedFilesMap $DestPath $Threads);
 	$modifiedFilesMap = $modifiedLists.ModifiedFilesMap;
 	$removedFoldersList = $modifiedLists.RemovedFoldersList;
+	PrintText ("");
 	# Atualiza os arquivos versionados e removidos em $DestPath
 	PrintText ("Etapa 1: Tratar arquivos versionados no destino");
 	$modifiedFilesMap = (UpdateVersioned $modifiedFilesMap $VersionLimit $Destructive $ListOnly);
@@ -82,10 +86,12 @@ Function RoboVersion {
 	$modifiedFilesMap = (UpdateRemoved $modifiedFilesMap $removedFoldersList $RemotionCountdown $Destructive $ListOnly);
 	PrintText ("");
 	# Lista os arquivos a versionar ou remover
+	PrintText ("Escaneando por arquivos a serem modificados ou deletados...");
 	$willModifyLists = (GetWillModifyFilesMap $OrigPath $DestPath $Threads);
 	$toVersionList = $willModifyLists.WillModifyList;
 	$toRemoveList = $willModifyLists.WillDeleteList;
 	$toRemoveFolderList = $willModifyLists.WillDeleteFolderList;
+	PrintText ("");
 	# Atualiza os arquivos a versionar ou remover em $DestPath
 	PrintText ("Etapa 3: Criar versões de arquivos modificados na origem");
 	$modifiedFilesMap = (UpdateToVersion $modifiedFilesMap $toVersionList $VersionLimit $ListOnly);
@@ -96,5 +102,7 @@ Function RoboVersion {
 	PrintText ("Etapa 5: Iniciar Robocopy e realizar espelhamento");
 	# Realiza a cópia
 	Mirror $OrigPath $DestPath $Threads $ListOnly;
+	PrintText ("");
+	PrintText ("RoboVersion: Concluído");
 	PrintText ("");
 }

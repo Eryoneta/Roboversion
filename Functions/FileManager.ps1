@@ -8,7 +8,7 @@ Function DeleteFilesList($modifiedFilesMap, $filesToDelete, $listOnly) {
 		# Deleta arquivo
 		PrintText ("`tDeleted`t" + $fileToDelete.Path);
 		If(-Not $listOnly) {
-			$Null = Remove-Item -LiteralPath $fileToDelete.Path -Recurse -Force;
+			$Null = (Remove-Item -LiteralPath $fileToDelete.Path -Recurse -Force);
 		}
 		# Deleta no fileMap
 		$fileBasePath = (Split-Path -Path $fileToDelete.Path -Parent);
@@ -25,7 +25,7 @@ Function RenameRemovedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
 		Return;
 	}
 	# Da lista, renomeia arquivos
-	ForEach($fileToRename In $filesToRename | Sort-Object -Property NewRemotionCountdown) {
+	ForEach($fileToRename In ($filesToRename | Sort-Object -Property NewRemotionCountdown)) {
 		$newRemotionCountdown = $fileToRename.NewRemotionCountdown;
 		$fileToRename = $fileToRename.File;
 		# Renomeia arquivo
@@ -37,7 +37,7 @@ Function RenameRemovedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
 		PrintText ("`tRenamed`t" + $fileToRename.Path + " ---> " + $newName);
 		If(-Not $listOnly) {
-			$Null = Rename-Item -LiteralPath $fileToRename.Path -NewName $newName -Force;
+			$Null = (Rename-Item -LiteralPath $fileToRename.Path -NewName $newName -Force);
 		}
 		# Renomeia no fileMap
 		$fileBasePath = (Split-Path -Path $fileToRename.Path -Parent);
@@ -57,7 +57,7 @@ Function RenameVersionedFilesList($modifiedFilesMap, $filesToRename, $listOnly) 
 		Return;
 	}
 	# Da lista, renomeia arquivos
-	ForEach($fileToRename In $filesToRename | Sort-Object -Property NewVersion) {
+	ForEach($fileToRename In ($filesToRename | Sort-Object -Property NewVersion)) {
 		$newVersion = $fileToRename.NewVersion;
 		$fileToRename = $fileToRename.File;
 		# Renomeia arquivo
@@ -69,7 +69,7 @@ Function RenameVersionedFilesList($modifiedFilesMap, $filesToRename, $listOnly) 
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
 		PrintText ("`tRenamed`t" + $fileToRename.Path + " ---> " + $newName);
 		If(-Not $listOnly) {
-			$Null = Rename-Item -LiteralPath $fileToRename.Path -NewName $newName -Force;
+			$Null = (Rename-Item -LiteralPath $fileToRename.Path -NewName $newName -Force);
 		}
 		# Renomeia no fileMap
 		$fileBasePath = (Split-Path -Path $fileToRename.Path -Parent);
@@ -103,7 +103,7 @@ Function CopyVersionedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
 		$newPath = (Join-Path -Path $fileBasePath -ChildPath $newName);
 		PrintText ("`tCopied`t" + $fileToCopy.Path + " ---> " + $newPath);
 		If(-Not $listOnly) {
-			$Null = Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force;
+			$Null = (Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force);
 		}
 		# Copia no fileMap
 		$nameKey = (Join-Path -Path $fileBasePath -ChildPath ($fileToCopy.BaseName + $fileToCopy.Extension));
@@ -141,11 +141,11 @@ Function CopyRemovedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
 		PrintText ("`tCopied`t" + $fileToCopy.Path + " ---> " + $newPath);
 		If(-Not $listOnly) {
 			If($isFolder) {
-				$Null = Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force;
+				$Null = (Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force);
 				$Null = (Get-ChildItem -LiteralPath $fileToCopy.Path -Filter $wildcardOfRemovedFile | Move-Item -Destination $newPath -Force);
 				$Null = (Get-ChildItem -LiteralPath $fileToCopy.Path -Filter $wildcardOfRemovedFolder | Move-Item -Destination $newPath -Force);
 			} Else {
-				$Null = Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force;
+				$Null = (Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force);
 			}
 		}
 		# Copia no fileMap

@@ -45,15 +45,38 @@ Function GetModifiedFilesMap($destPath, $threads) {
 		$wildcardOfVersionedFile `
 		$wildcardOfRemovedFile `
 		/S /SJ /SL /R:1 /W:0 /MT:$threads /L /NJH /NJS /FP /NC /NS /NP /NDL /UNILOG:$modifiedFilesList_FilePath);
-	# Carrega MODIFIED e o deleta
-	$modifiedFilesList_File = (Get-Content $modifiedFilesList_FilePath);
-	$Null = Remove-Item $modifiedFilesList_FilePath;
-	# Ordena lista de arquivos versionados e removidos, e pastas removidas
-	$removedFoldersPathList = ((Get-ChildItem -LiteralPath $destPath -Filter $wildcardOfRemovedFolder -Recurse -Directory) | ForEach {"$($_.FullName)"});
-	$modifiedFilesMap = GetFileMap ($modifiedFilesList_File);
-	$removedFoldersMap = GetFileMap ($removedFoldersPathList);
+	$modifiedFilesList_File = "";
+	If(Test-Path -LiteralPath $modifiedFilesList_FilePath -PathType "Leaf") {
+		# Carrega MODIFIED e o deleta
+		$modifiedFilesList_File = (Get-Content $modifiedFilesList_FilePath);
+		$Null = (Remove-Item $modifiedFilesList_FilePath);
+	}
+	# $removedFoldersPathList = (( # É incapaz de lidar com path>260, resultando em erro em loop
+	# 	Get-ChildItem -LiteralPath $destPath -Filter $wildcardOfRemovedFolder -Recurse -Directory -Force -ErrorAction SilentlyContinue
+	# ) | ForEach {"$($_.FullName)"});
+	# Lista as pastas em MODIFIED
+	#   Sem destino
+	#   Considerar apenas pastas
+	#   /L = Listar apenas!
+	$Null = (Robocopy $destPath null `
+		/E /SJ /SL /R:1 /W:0 /L /NJH /NJS /FP /NC /NS /NP /NFL /UNILOG:$modifiedFilesList_FilePath);
+	$removedFoldersList_File = "";
+	If(Test-Path -LiteralPath $modifiedFilesList_FilePath -PathType "Leaf") {
+		# Carrega MODIFIED e o deleta
+		$removedFoldersList_File = (Get-Content $modifiedFilesList_FilePath);
+		$Null = (Remove-Item $modifiedFilesList_FilePath);
+	}
 	$removedFoldersList = [System.Collections.ArrayList]::new();
-	ForEach($nameKey In $removedFoldersMap.List() | Sort-Object -Descending) {
+	ForEach($removedFolder In $removedFoldersList_File) {
+		If($removedFolder -Like $wildcardOfRemovedFolder) {
+			$Null = $removedFoldersList.Add($removedFolder);
+		}
+	}
+	# Ordena lista de arquivos versionados e removidos, e pastas removidas
+	$modifiedFilesMap = (GetFileMap ($modifiedFilesList_File));
+	$removedFoldersMap = (GetFileMap ($removedFoldersList));
+	$removedFoldersList = [System.Collections.ArrayList]::new();
+	ForEach($nameKey In ($removedFoldersMap.List() | Sort-Object -Descending)) {
 		$removedFolder = $removedFoldersMap.Get($nameKey).Get(-1).Get(0);
 		$Null = $removedFoldersList.Add($removedFolder);
 	}
@@ -68,8 +91,8 @@ Function GetModifiedFilesMap($destPath, $threads) {
 # Retorna uma lista de arquivos que serão modificados no $destPath para refletir $origPath
 Function GetWillModifyFilesMap($origPath, $destPath, $threads) {
 	# Path do arquivo com a lista de arquivos a serem versionados ou removidos em $destPath
-	$toModifyFilesList_FilePath = (Join-Path -Path $destPath -ChildPath "TO_MODIFY");
-	# Lista os arquivos a serem versionados e removidos em TO_MODIFY
+	$willModifyFilesList_FilePath = (Join-Path -Path $destPath -ChildPath "WILL_MODIFY");
+	# Lista os arquivos a serem versionados e removidos em WILL_MODIFY
 	#   /MIR = Espelhar
 	#   /XF = Ignorar arquivos(Os versionados, os removidos, os versionados e removidos)
 	#   /XD = Ignorar pastas(Os removidos)
@@ -77,38 +100,50 @@ Function GetWillModifyFilesMap($origPath, $destPath, $threads) {
 		/XF `
 			$wildcardOfVersionedFile `
 			$wildcardOfRemovedFile `
-			$toModifyFilesList_FilePath `
+			$willModifyFilesList_FilePath `
 		/XD `
 			$wildcardOfRemovedFolder `
-		/L /NJH /NJS /FP /NC /NS /NP /UNILOG:$toModifyFilesList_FilePath);
-	# Carrega TO_MODIFY e o deleta
-	$toModifyFilesList_File = (Get-Content $toModifyFilesList_FilePath);
-	$Null = Remove-Item $toModifyFilesList_FilePath;
-	# Ordena lista de arquivos versionados e removidos
-	$toModifyFilesMap = GetFileMap $toModifyFilesList_File;
+		/L /NJH /NJS /FP /NC /NS /NP /UNILOG:$willModifyFilesList_FilePath);
+	$willModifyFilesList_File = "";
+	If(Test-Path -LiteralPath $willModifyFilesList_FilePath -PathType "Leaf") {
+		# Carrega WILL_MODIFY e o deleta
+		$willModifyFilesList_File = (Get-Content $willModifyFilesList_FilePath);
+		$Null = (Remove-Item $willModifyFilesList_FilePath);
+	}
 	# Lista de a modificar e a remover
 	$willModifyList = [System.Collections.ArrayList]::new();
 	$willDeleteList = [System.Collections.ArrayList]::new();
 	$willDeleteFolderList = [System.Collections.ArrayList]::new();
+	# Regex
 	$regexOfModifiedOrCreated = ("^(?<RootPath>" + [Regex]::Escape($origPath) + ")(?<FilePath>.*)$");
 	$regexOfDeleted = ("^(?<RootPath>" + [Regex]::Escape($destPath) + ")(?<FilePath>.*)$");
-	ForEach($nameKey In $toModifyFilesMap.List()) {
-		$toModifyFile = $toModifyFilesMap.Get($nameKey).Get(-1).Get(-1);
-		If($toModifyFile.Path -match $regexOfModifiedOrCreated) {
-			$toModifyFile.Path = (Join-Path -Path  $destPath -ChildPath $Matches.FilePath);
+	# Preenche as listas
+	ForEach($willModifyFilePath In $willModifyFilesList_File) {
+		If(-Not $willModifyFilePath) {
+			Continue;
+		}
+		$willModifyFilePath = $willModifyFilePath.Trim();
+		If($willModifyFilePath -match $regexOfModifiedOrCreated) {
+			$newFilePath = (Join-Path -Path  $destPath -ChildPath $Matches.FilePath);
 			# Arquivo a modificar
-			If(Test-Path -LiteralPath $toModifyFile.Path -PathType "Leaf") {
-				$Null = $willModifyList.Add($toModifyFile);
+			If(Test-Path -LiteralPath $newFilePath -PathType "Leaf") {
+				$newFile = (GetFileItem $willModifyFilePath);
+				$newFile.Path = $newFilePath;
+				$Null = $willModifyList.Add($newFile);
 			# Arquivo a criar
 			} Else {
 				# Ignorar
 			}
-		} ElseIf($toModifyFile.Path -match $regexOfDeleted) {
-			$toModifyFile.Path = (Join-Path -Path  $destPath -ChildPath $Matches.FilePath);
-			If(Test-Path -LiteralPath $toModifyFile.Path -PathType "Container") {
-				$Null = $willDeleteFolderList.Add($toModifyFile);
-			} Else {
-				$Null = $willDeleteList.Add($toModifyFile);
+		} ElseIf($willModifyFilePath -match $regexOfDeleted) {
+			$newFilePath = (Join-Path -Path  $destPath -ChildPath $Matches.FilePath);
+			$newFile = (GetFileItem $willModifyFilePath);
+			$newFile.Path = $newFilePath;
+			If($newFile.VersionIndex -eq -1 -And $newFile.RemotionCountdown -eq -1) {
+				If(Test-Path -LiteralPath $newFilePath -PathType "Container") {
+					$Null = $willDeleteFolderList.Add($newFile);
+				} Else {
+					$Null = $willDeleteList.Add($newFile);
+				}
 			}
 		}
 	}
@@ -128,20 +163,20 @@ Function GetWillModifyFilesMap($origPath, $destPath, $threads) {
 # Ordena arquivos com mesmo nome em grupos, agrupando os versionados e os removidos
 #   Ex.: Arquivos {
 #     "C:/Folder/SubFolder/File.ext": {
-#       -1: {	# Versão inexistente
-#         -1: {		# Remoção inexistente
-#           "C:/Folder/SubFolder/File.ext"
-#         },
-#         4: {		# Remoção em 4
-#           "C:/Folder/SubFolder/File _removeIn[4].ext"
-#         }
-#       },
 #       3: {	# Versão 3
-#         -1: {		# Remoção inexistente
-#           "C:/Folder/SubFolder/File _version[3].ext"
-#         },
 #         4: {		# Remoção em 4
 #           "C:/Folder/SubFolder/File _version[3] _removeIn[4].ext"
+#         },
+#         -1: {		# Remoção inexistente
+#           "C:/Folder/SubFolder/File _version[3].ext"
+#         }
+#       },
+#       -1: {	# Versão inexistente
+#         4: {		# Remoção em 4
+#           "C:/Folder/SubFolder/File _removeIn[4].ext"
+#         },
+#         -1: {		# Remoção inexistente
+#           "C:/Folder/SubFolder/File.ext"
 #         }
 #       }
 #     }
@@ -149,58 +184,19 @@ Function GetWillModifyFilesMap($origPath, $destPath, $threads) {
 #   Todos ficam listados em ordem numérica reversa
 Function GetFileMap($filePathList) {
 	$allFilesMap = [FileMap]::new();
-	$regexOfBaseName = ("(?<BaseName>.*?)");
-	$regexOfVersion = ("(?: ?" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[0-9]+)" + [Regex]::Escape($versionEnd)) + ")?");
-	$regexOfRemotion = ("(?: ?" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[0-9]+)" + [Regex]::Escape($remotionEnd)) + ")?");
-	$regexOfExtension = ("(?<Extension>\.[^\.]*)?");
-	$regexOfFile = ("^" + $regexOfBaseName + $regexOfVersion + $regexOfRemotion + $regexOfExtension + "$");
-	$regexOfFolderRemotion = ("(?: ?" + [Regex]::Escape($remotionFolder) + ")");
-	$regexOfFolder = ("^" + $regexOfBaseName + $regexOfFolderRemotion + $regexOfExtension + "$");
 	ForEach($filePath In $filePathList) {
 		If(-Not $filePath) {
 			Continue;
 		}
 		$filePath = $filePath.Trim();
+		$newFile = (GetFileItem $filePath);
 		$fileBasePath = (Split-Path -Path $filePath -Parent);
-		$fileName = (Split-Path -Path $filePath -Leaf);
+		$baseName = (Join-Path -Path $fileBasePath -ChildPath ($newFile.BaseName + $newFile.Extension));
 		# Ex.:
 		#   $filePath = "C:\Folder\SubFolder\File _version[v] _removeIn[r].ext"
 		#   $fileBasePath = "C:\Folder\SubFolder"
-		#   $fileName = "File _version[v] _removeIn[r].ext"
-		If($fileName -Match $regexOfFolder) {
-			# Ex.:
-			#   BaseName = "Folder"
-			#   RemotionCountdown = "r"
-			#   Extension = ".ext"
-			$baseName = (Join-Path -Path $fileBasePath -ChildPath ($Matches.BaseName + $Matches.Extension));
-			# Ex.:
-			#   $baseName = "C:\Folder\SubFolder\Folder.ext"
-			$versionIndex = -1;
-			$remotionCountdown = 0;
-			# Valor
-			$newFile = (NewFileItem $filePath $Matches.BaseName $versionIndex $remotionCountdown $Matches.Extension);
-			$allFilesMap.Get($baseName).Get($versionIndex).Set($remotionCountdown, $newFile);
-		} ElseIf($fileName -Match $regexOfFile) {
-			# Ex.:
-			#   BaseName = "File"
-			#   VersionIndex = "v"
-			#   RemotionCountdown = "r"
-			#   Extension = ".ext"
-			$baseName = (Join-Path -Path $fileBasePath -ChildPath ($Matches.BaseName + $Matches.Extension));
-			# Ex.:
-			#   $baseName = "C:\Folder\SubFolder\File.ext"
-			$versionIndex = -1;
-			If($Matches.VersionIndex) {
-				$versionIndex = [int]$Matches.VersionIndex;
-			}
-			$remotionCountdown = -1;
-			If($Matches.RemotionCountdown) {
-				$remotionCountdown = [int]$Matches.RemotionCountdown;
-			}
-			# Valor
-			$newFile = (NewFileItem $filePath $Matches.BaseName $versionIndex $remotionCountdown $Matches.Extension);
-			$allFilesMap.Get($baseName).Get($versionIndex).Set($remotionCountdown, $newFile);
-		}
+		#   $baseName = "C:\Folder\SubFolder\Folder.ext"
+		$allFilesMap.Get($baseName).Get($newFile.VersionIndex).Set($newFile.RemotionCountdown, $newFile);
 	}
 	# Ordena a lista
 	$sortedFileMap = (GetSortedFileMap $allFilesMap);
@@ -208,6 +204,56 @@ Function GetFileMap($filePathList) {
 	Return $sortedFileMap;
 }
 
+# Retorna um objeto, dado um path
+Function GetFileItem($filePath) {
+	If(-Not $filePath) {
+		Return $Null;
+	}
+	# Regex
+	$regexOfBaseName = ("(?<BaseName>.*?)");
+	$regexOfVersion = ("(?: ?" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[0-9]+)" + [Regex]::Escape($versionEnd)) + ")?");
+	$regexOfRemotion = ("(?: ?" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[0-9]+)" + [Regex]::Escape($remotionEnd)) + ")?");
+	$regexOfExtension = ("(?<Extension>\.[^\.]*)?");
+	$regexOfFile = ("^" + $regexOfBaseName + $regexOfVersion + $regexOfRemotion + $regexOfExtension + "$");
+	$regexOfFolderRemotion = ("(?: ?" + [Regex]::Escape($remotionFolder) + ")");
+	$regexOfFolder = ("^" + $regexOfBaseName + $regexOfFolderRemotion + $regexOfExtension + "$");
+	# Novo File
+	$fileName = (Split-Path -Path $filePath -Leaf);
+	# Ex.:
+	#   $filePath = "C:\Folder\SubFolder\File _version[v] _removeIn[r].ext"
+	#   $fileName = "File _version[v] _removeIn[r].ext"
+	If($fileName -Match $regexOfFolder) {
+		# Ex.:
+		#   BaseName = "Folder"
+		#   RemotionCountdown = "r"
+		#   Extension = ".ext"
+		$versionIndex = -1;
+		$remotionCountdown = 0;
+		# Valor
+		$newFolder = (NewFileItem $filePath $Matches.BaseName $versionIndex $remotionCountdown $Matches.Extension);
+		Return $newFolder;
+	} ElseIf($fileName -Match $regexOfFile) {
+		# Ex.:
+		#   BaseName = "File"
+		#   VersionIndex = "v"
+		#   RemotionCountdown = "r"
+		#   Extension = ".ext"
+		$versionIndex = -1;
+		If($Matches.VersionIndex) {
+			$versionIndex = [int]$Matches.VersionIndex;
+		}
+		$remotionCountdown = -1;
+		If($Matches.RemotionCountdown) {
+			$remotionCountdown = [int]$Matches.RemotionCountdown;
+		}
+		# Valor
+		$newFile = (NewFileItem $filePath $Matches.BaseName $versionIndex $remotionCountdown $Matches.Extension);
+		Return $newFile;
+	}
+	Return $Null;
+}
+
+# Retorna um objeto que pode ser inserido no fileMap
 Function NewFileItem($filePath, $baseName, $versionIndex, $remotionCountdown, $extension) {
 	Return [PSCustomObject]@{
 		Path = $filePath;

@@ -1,12 +1,13 @@
-﻿. "../RoboVersion.ps1";
-. "../Functions/FileMap.ps1";
-. "../Functions/Functions.ps1";
-. "../Functions/FileManager.ps1";
-. "../Functions/UpdateVersioned.ps1";
-. "../Functions/UpdateRemoved.ps1";
-. "../Functions/UpdateToVersion.ps1";
-. "../Functions/UpdateToRemove.ps1";
-. "../Functions/Mirror.ps1";
+﻿. "./RoboVersion.ps1";
+. "./Functions/FileMap.ps1";
+. "./Functions/Functions.ps1";
+. "./Functions/FileManager.ps1";
+. "./Functions/UpdateVersioned.ps1";
+. "./Functions/UpdateRemoved.ps1";
+. "./Functions/UpdateToVersion.ps1";
+. "./Functions/UpdateToRemove.ps1";
+. "./Functions/Mirror.ps1";
+# . "./Functions/DevTools.ps1"; precisa ser executada na pasta onde fica "RoboVersion.ps1"!
 
 Function EchoFileMap($fileMap) {
 	If(-Not $fileMap) {
@@ -38,7 +39,7 @@ Function Test_GetFileMap() {
 		"C:\Folder\SubFolder\File.ext",
 		"";
 	$orderedMap = GetFileMap $filePathList;
-	# EchoFileMap $orderedMap;
+	EchoFileMap $orderedMap;
 	$sucess = TestFilePresence $orderedMap (
 		("C:\Folder\SubFolder\File.ext", 4, 7),
 		("C:\Folder\SubFolder\File.ext", 2, 5),
