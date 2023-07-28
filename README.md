@@ -16,11 +16,6 @@ With that, the command `Roboversion` will properly call a function.
 ### `-DestPath`, `-DP`:
 - Path to the target-folder, which will contain the copies and versions.
 
-### `-Threads`. `-T`:
-- Amount of threads that will be used on the process.
-- Needs to be between `1` and `128`. Default is `8`.
-- Optional.
-
 ### `-VersionLimit`, `-VL`, `-V`:
 - Total of versions allowed before replacing old ones.
 - Needs to be between `0` and `99999`. Default is `5`.

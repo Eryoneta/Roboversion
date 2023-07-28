@@ -5,9 +5,6 @@
 #   -DestPath, -DP:
 #     Cominho da pasta com os arquivos versionados
 #     O caminho deve ser válido
-#   -Threads, -T:
-#     Número de processos em paralelo
-#     Deve ser entre 1 e 128
 #   -VersionLimit, -VL, -V:
 #     A quantidade máxima de versões antes de deletar os mais antigos
 #     Deve ser entre 0 e 99999
@@ -42,10 +39,6 @@ Function RoboVersion {
 			})]
 			[string] $DestPath,
 		[Parameter()]
-			[Alias("T")]
-			[ValidateRange(1,128)]
-			[int] $Threads = 8,
-		[Parameter()]
 			[Alias("V", "VL")]
 			[ValidateRange(0,99999)]
 			[int] $VersionLimit = 5,
@@ -74,7 +67,7 @@ Function RoboVersion {
 	PrintText ("");
 	# Lista os arquivos versionados e removidos
 	PrintText ("Escaneando por versionados e removidos...");
-	$modifiedLists = (GetModifiedFilesMap $DestPath $Threads);
+	$modifiedLists = (GetModifiedFilesMap $DestPath);
 	$modifiedFilesMap = $modifiedLists.ModifiedFilesMap;
 	$removedFoldersList = $modifiedLists.RemovedFoldersList;
 	PrintText ("");
@@ -87,7 +80,7 @@ Function RoboVersion {
 	PrintText ("");
 	# Lista os arquivos a versionar ou remover
 	PrintText ("Escaneando por arquivos a serem modificados ou deletados...");
-	$willModifyLists = (GetWillModifyFilesMap $OrigPath $DestPath $Threads);
+	$willModifyLists = (GetWillModifyFilesMap $OrigPath $DestPath);
 	$toVersionList = $willModifyLists.WillModifyList;
 	$toRemoveList = $willModifyLists.WillDeleteList;
 	$toRemoveFolderList = $willModifyLists.WillDeleteFolderList;
@@ -101,7 +94,7 @@ Function RoboVersion {
 	PrintText ("");
 	PrintText ("Etapa 5: Iniciar Robocopy e realizar espelhamento");
 	# Realiza a cópia
-	Mirror $OrigPath $DestPath $Threads $ListOnly;
+	Mirror $OrigPath $DestPath $ListOnly;
 	PrintText ("");
 	PrintText ("RoboVersion: Concluído");
 	PrintText ("");
