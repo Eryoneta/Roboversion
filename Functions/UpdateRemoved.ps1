@@ -102,5 +102,5 @@ Function UpdateRemoved($modifiedFilesMap, $removedFolderList, $remotionCountdown
 	Return $modifiedFilesMap;
 }
 	Function IsFolderEmpty($folderPath) {
-		Return ((Get-ChildItem -LiteralPath $folderPath -File -Force | Select-Object -First 1 | Measure-Object).Count -eq 0);
+		Return ((Get-ChildItem -LiteralPath $folderPath -Force | Select-Object -First 1).Count -eq 0);
 	}

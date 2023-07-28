@@ -10,6 +10,6 @@ Function Mirror($OrigPath, $DestPath, $ListOnly) {
 			$wildcardOfRemovedFile `
 		/XD `
 			$wildcardOfRemovedFolder `
-		$list /NJH /NJS;
+		$list /NJH /NJS /NDL;
 	PrintText ("");
 }

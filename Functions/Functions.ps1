@@ -51,9 +51,12 @@ Function GetModifiedFilesMap($destPath) {
 		$modifiedFilesList_File = (Get-Content $modifiedFilesList_FilePath);
 		$Null = (Remove-Item $modifiedFilesList_FilePath);
 	}
-	# $removedFoldersPathList = (( # É incapaz de lidar com path>260, resultando em erro em loop
-	# 	Get-ChildItem -LiteralPath $destPath -Filter $wildcardOfRemovedFolder -Recurse -Directory -Force -ErrorAction SilentlyContinue
-	# ) | ForEach {"$($_.FullName)"});
+	# É incapaz de lidar com path>260, resultando em erro em loop
+	## $removedFoldersPathList = ((
+	## 	Get-ChildItem -LiteralPath $destPath -Filter $wildcardOfRemovedFolder -Recurse -Directory -Force -ErrorAction SilentlyContinue
+	## ) | ForEach {"$($_.FullName)"});
+	# Solução: Usar Robocopy para listar TODAS as pastas(Não aceita filtro de pastas-removidas...) e filtrar pelas removidas. Lento, mas funciona...!
+	#
 	# Lista as pastas em MODIFIED
 	#   Sem destino
 	#   Considerar apenas pastas
