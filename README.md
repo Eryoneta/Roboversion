@@ -79,17 +79,35 @@ With that, the command `Roboversion` will properly call a function.
   - The space before the mark is optional: "`filename _version[v].ext`"(With space) is the same as "`filename_version[v].ext`"(No space).
   - Versions and remotions can be manually renamed, respecting the `1-99999` and `0-99999` ranges.
 
+## In Practice
+- _myFile.ext_ (Text = "abc")   --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 30`)--> _myFile.ext_ (Text = "abc")
+  - Creates a copy.
+- _myFile.ext_ (Text = "abcde") --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 30`)--> _myFile.ext_ (Text = "abcde"), _myFile \_version[1].ext_ (Text = "abc")
+  - With _myFile.ext_ being modified, creates a new version.
+- _myFile.ext_ (Text = "abcdefg") --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 30`)--> _myFile.ext_ (Text = "abcdefg"), _myFile \_version[1].ext_ (Text = "abcde")
+  - With _myFile.ext_ being modified again, creates a new version, deleting the old one.
+- DELETED --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 30`)--> _myFile \_removeIn[30].ext_ (Text = "abcdefg"), _myFile \_version[1] \_removeIn[30].ext_ (Text = "abcde")
+  - With _myFile.ext_ deleted, all of its versions are marked as removed.
+- --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 30`)--> _myFile \_removeIn[29].ext_ (Text = "abcdefg"), _myFile \_version[1] \_removeIn[29].ext_ (Text = "abcde")
+  - For each run of the script, the countdown is decreased.
+- --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 1 -D`)--> _myFile \_removeIn[1].ext_ (Text = "abcdefg"), _myFile \_version[1] \_removeIn[1].ext_ (Text = "abcde")
+  - That big of a countdown is not needed! Its taking too long to delete files! In that case, you can force a new countdown value.
+- --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 1`)--> _myFile \_removeIn[0].ext_ (Text = "abcdefg"), _myFile \_version[1] \_removeIn[0].ext_ (Text = "abcde")
+  - The countdown being at 0 marks the last chance to visit the files before permanent deletion.
+- --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 1`)--> DELETED
+  - The remotions are deleted.
+
 ## Inner Workings
 
 Everything is based around _Robocopy_:
 - All versions and remotions present on the target-folder are listed with a _Robocopy_ command that only checks marked files.
   - Versions and remotions are renamed or deleted as needed.
+  - (Unfortunadely, _Robocopy_ does not allow to filter folders. So, all folders have to be listed by it and filtered by _Roboversion_. This can be a little slow).
 - All files to be modified are listed with another _Robocopy_ command that only lists differences.
   - New versions and remotions are created, renaming or deleting old ones as needed.
 - Then a final _Robocopy_ does the mirroring.
 
 It all happens in five stages: `UpdateVersioned`, `UpdateRemoved`, `UpdateToVersion`, `UpdateToRemove`, and `Mirror`.
-
 ## Dependecies
 
 Developed using _Robocopy.exe_ and _PowerShell v5.1_.
