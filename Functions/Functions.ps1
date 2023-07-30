@@ -214,8 +214,8 @@ Function GetFileItem($filePath) {
 	}
 	# Regex
 	$regexOfBaseName = ("(?<BaseName>.*?)");
-	$regexOfVersion = ("(?: ?" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[0-9]+)" + [Regex]::Escape($versionEnd)) + ")?");
-	$regexOfRemotion = ("(?: ?" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[0-9]+)" + [Regex]::Escape($remotionEnd)) + ")?");
+	$regexOfVersion = ("(?: ?" + ([Regex]::Escape($versionStart) + "(?<VersionIndex>[0-9]{1,5})" + [Regex]::Escape($versionEnd)) + ")?");
+	$regexOfRemotion = ("(?: ?" + ([Regex]::Escape($remotionStart) + "(?<RemotionCountdown>[0-9]{1,5})" + [Regex]::Escape($remotionEnd)) + ")?");
 	$regexOfExtension = ("(?<Extension>\.[^\.]*)?");
 	$regexOfFile = ("^" + $regexOfBaseName + $regexOfVersion + $regexOfRemotion + $regexOfExtension + "$");
 	$regexOfFolderRemotion = ("(?: ?" + [Regex]::Escape($remotionFolder) + ")");
