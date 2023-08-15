@@ -114,6 +114,7 @@ Function GetWillModifyFilesMap($origPath, $destPath) {
 		$Null = (Remove-Item $willModifyFilesList_FilePath);
 	}
 	# Lista de a modificar e a remover
+	$willModify = $False;
 	$willModifyList = [System.Collections.ArrayList]::new();
 	$willDeleteList = [System.Collections.ArrayList]::new();
 	$willDeleteFolderList = [System.Collections.ArrayList]::new();
@@ -127,15 +128,19 @@ Function GetWillModifyFilesMap($origPath, $destPath) {
 		}
 		$willModifyFilePath = $willModifyFilePath.Trim();
 		If($willModifyFilePath -match $regexOfModifiedOrCreated) {
+			$oldFilePath = $Matches.FilePath;
 			$newFilePath = (Join-Path -Path  $destPath -ChildPath $Matches.FilePath);
 			# Arquivo a modificar
 			If(Test-Path -LiteralPath $newFilePath -PathType "Leaf") {
 				$newFile = (GetFileItem $willModifyFilePath);
 				$newFile.Path = $newFilePath;
 				$Null = $willModifyList.Add($newFile);
+				$willModify = $True;
 			# Arquivo a criar
-			} Else {
-				# Ignorar
+			} ElseIf(Test-Path -LiteralPath $oldFilePath -PathType "Leaf") { 
+					# Pastas devem ser listadas pelas a-deletar, mas também lista as presentes
+				# Não listar arquivos a criar
+				$willModify = $True;
 			}
 		} ElseIf($willModifyFilePath -match $regexOfDeleted) {
 			$newFilePath = (Join-Path -Path  $destPath -ChildPath $Matches.FilePath);
@@ -148,6 +153,7 @@ Function GetWillModifyFilesMap($origPath, $destPath) {
 					$Null = $willDeleteList.Add($newFile);
 				}
 			}
+			$willModify = $True;
 		}
 	}
 	$orderedWillDeleteFolderList = [System.Collections.ArrayList]::new();
@@ -155,6 +161,7 @@ Function GetWillModifyFilesMap($origPath, $destPath) {
 		$Null = $orderedWillDeleteFolderList.Add($willDeleteFolder);
 	}
 	$willModifyLists = [PSCustomObject]@{
+		WillModify = $willModify;
 		WillModifyList = $willModifyList;
 		WillDeleteList = $willDeleteList;
 		WillDeleteFolderList = $orderedWillDeleteFolderList;

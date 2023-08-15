@@ -81,6 +81,7 @@ Function RoboVersion {
 	# Lista os arquivos a versionar ou remover
 	PrintText ("Escaneando por arquivos a serem modificados ou deletados...");
 	$willModifyLists = (GetWillModifyFilesMap $OrigPath $DestPath);
+	$toModify = $willModifyLists.WillModify;
 	$toVersionList = $willModifyLists.WillModifyList;
 	$toRemoveList = $willModifyLists.WillDeleteList;
 	$toRemoveFolderList = $willModifyLists.WillDeleteFolderList;
@@ -94,7 +95,7 @@ Function RoboVersion {
 	PrintText ("");
 	PrintText ("Etapa 5: Iniciar Robocopy e realizar espelhamento");
 	# Realiza a cópia
-	Mirror $OrigPath $DestPath $ListOnly;
+	Mirror $OrigPath $DestPath $toModify $ListOnly;
 	PrintText ("");
 	PrintText ("RoboVersion: Concluído");
 	PrintText ("");
