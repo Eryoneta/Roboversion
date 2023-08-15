@@ -128,7 +128,7 @@ Function GetWillModifyFilesMap($origPath, $destPath) {
 		}
 		$willModifyFilePath = $willModifyFilePath.Trim();
 		If($willModifyFilePath -match $regexOfModifiedOrCreated) {
-			$oldFilePath = $Matches.FilePath;
+			$oldFilePath = $willModifyFilePath;
 			$newFilePath = (Join-Path -Path  $destPath -ChildPath $Matches.FilePath);
 			# Arquivo a modificar
 			If(Test-Path -LiteralPath $newFilePath -PathType "Leaf") {
