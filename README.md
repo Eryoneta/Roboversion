@@ -78,24 +78,29 @@ With that, the command `Roboversion` will properly call a function.
   - Files that begin with a "`.`" are understood as a extension without a name: "`.filename`" results into versions named "` _version[v].filename`".
   - The space before the mark is optional: "`filename _version[v].ext`"(With space) is the same as "`filename_version[v].ext`"(No space).
   - Versions and remotions can be manually renamed, respecting the `1-99999` and `0-99999` ranges.
+- __Caveats__:
+  - Newly created folders with no files are not listed, but are still copied over.
+  - Before processing files, it needs _Robocopy_ to list them all. That can be a little slow.
+    - During the listing process, a file will be temporarily created on the target-folder. That's the only way for _Robocopy_ to list files with special characters on it's name.
 
 ## In Practice
-- _myFile.ext_ (Text = "abc")   --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 30`)--> _myFile.ext_ (Text = "abc")
-  - Creates a copy.
-- _myFile.ext_ (Text = "abcde") --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 30`)--> _myFile.ext_ (Text = "abcde"), _myFile \_version[1].ext_ (Text = "abc")
-  - With _myFile.ext_ being modified, creates a new version.
-- _myFile.ext_ (Text = "abcdefg") --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 30`)--> _myFile.ext_ (Text = "abcdefg"), _myFile \_version[1].ext_ (Text = "abcde")
-  - With _myFile.ext_ being modified again, creates a new version, deleting the old one.
-- DELETED --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 30`)--> _myFile \_removeIn[30].ext_ (Text = "abcdefg"), _myFile \_version[1] \_removeIn[30].ext_ (Text = "abcde")
-  - With _myFile.ext_ deleted, all of its versions are marked as removed.
-- --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 30`)--> _myFile \_removeIn[29].ext_ (Text = "abcdefg"), _myFile \_version[1] \_removeIn[29].ext_ (Text = "abcde")
-  - For each run of the script, the countdown is decreased.
-- --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 1 -D`)--> _myFile \_removeIn[1].ext_ (Text = "abcdefg"), _myFile \_version[1] \_removeIn[1].ext_ (Text = "abcde")
-  - That big of a countdown is not needed! Its taking too long to delete files! In that case, you can force a new countdown value.
-- --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 1`)--> _myFile \_removeIn[0].ext_ (Text = "abcdefg"), _myFile \_version[1] \_removeIn[0].ext_ (Text = "abcde")
-  - The countdown being at 0 marks the last chance to visit the files before permanent deletion.
-- --(`Roboversion "D:\myFolder" "M:\myBackup" -V 1 -R 1`)--> DELETED
-  - The remotions are deleted.
+| "D:\myFolder" | Command | "M:\myBackup" |
+| --- | --- | --- |
+| _myFile.ext_ ("A") | `Roboversion "D:\myFolder" "M:\myBackup" -V 4`<br/>(To create a inicial copy, same as _Robocopy_) | _myFile.ext_ ("A") |
+| _myFile.ext_ ("B") | `Roboversion "D:\myFolder" "M:\myBackup" -V 4`<br/>(Here, it creates a version) | _myFile.ext_ ("B")<br/>_myFile \_version[1].ext_ ("A") |
+| _myFile.ext_ ("C") | `Roboversion "D:\myFolder" "M:\myBackup" -V 4`<br/>(Another version) | _myFile.ext_ ("C")<br/>_myFile \_version[2].ext_ ("B")<br/>_myFile \_version[1].ext_ ("A") |
+| _myFile.ext_ ("D") | `Roboversion "D:\myFolder" "M:\myBackup" -V 4` | _myFile.ext_ ("D")<br/>_myFile \_version[3].ext_ ("C")<br/>_myFile \_version[2].ext_ ("B")<br/>_myFile \_version[1].ext_ ("A") |
+| _myFile.ext_ ("E") | `Roboversion "D:\myFolder" "M:\myBackup" -V 4` | _myFile.ext_ ("E")<br/>_myFile \_version[4].ext_ ("D")<br/>_myFile \_version[3].ext_ ("C")<br/>_myFile \_version[2].ext_ ("B")<br/>_myFile \_version[1].ext_ ("A") |
+| _myFile.ext_ ("F") | `Roboversion "D:\myFolder" "M:\myBackup" -V 4`<br/>(Now, any new versions causes the oldest one to be replaced) | _myFile.ext_ ("F")<br/>_myFile \_version[4].ext_ ("E")<br/>_myFile \_version[3].ext_ ("D")<br/>_myFile \_version[2].ext_ ("C")<br/>_myFile \_version[1].ext_ ("B") |
+| _myFile.ext_ ("G") | `Roboversion "D:\myFolder" "M:\myBackup" -V 4` | _myFile.ext_ ("G")<br/>_myFile \_version[4].ext_ ("F")<br/>_myFile \_version[3].ext_ ("E")<br/>_myFile \_version[2].ext_ ("D")<br/>_myFile \_version[1].ext_ ("C") |
+| _myFile.ext_ ("H") | `Roboversion "D:\myFolder" "M:\myBackup" -V 2 -D`<br/>(Too many versions! Only two is good) | _myFile.ext_ ("H")<br/>_myFile \_version[2].ext_ ("G")<br/>_myFile \_version[1].ext_ ("F") |
+| _myFile.ext_ ("I") | `Roboversion "D:\myFolder" "M:\myBackup" -V 2`<br/>(Using `2` instead of `4` now) | _myFile.ext_ ("I")<br/>_myFile \_version[2].ext_ ("H")<br/>_myFile \_version[1].ext_ ("G") |
+| | `Roboversion "D:\myFolder" "M:\myBackup" -V 2 -R 30`<br/>(To reflect the deleted file) | _myFile \_removeIn[30].ext_ ("I")<br/>_myFile \_version[2] \_removeIn[30].ext_ ("H")<br/>_myFile \_version[1] \_removeIn[30].ext_ ("G") |
+| | `Roboversion "D:\myFolder" "M:\myBackup" -V 2 -R 30`<br/>(Running now, it only decreases the countdown) | _myFile \_removeIn[29].ext_ ("I")<br/>_myFile \_version[2] \_removeIn[29].ext_ ("H")<br/>_myFile \_version[1] \_removeIn[29].ext_ ("G") |
+| | `Roboversion "D:\myFolder" "M:\myBackup" -V 2 -R 30` | _myFile \_removeIn[28].ext_ ("I")<br/>_myFile \_version[2] \_removeIn[28].ext_ ("H")<br/>_myFile \_version[1] \_removeIn[28].ext_ ("G") |
+| | `Roboversion "D:\myFolder" "M:\myBackup" -V 2 -R 1 -D`<br/>(It's taking too long!) | _myFile \_removeIn[1].ext_ ("I")<br/>_myFile \_version[2] \_removeIn[1].ext_ ("H")<br/>_myFile \_version[1] \_removeIn[1].ext_ ("G") |
+| | `Roboversion "D:\myFolder" "M:\myBackup" -V 2 -R 1` | _myFile \_removeIn[0].ext_ ("I")<br/>_myFile \_version[2] \_removeIn[0].ext_ ("H")<br/>_myFile \_version[1] \_removeIn[0].ext_ ("G") |
+| | `Roboversion "D:\myFolder" "M:\myBackup" -V 2 -R 1`<br/>(With `0`, all remotions are deleted) | |
 
 ## Inner Workings
 

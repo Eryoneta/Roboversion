@@ -1,10 +1,14 @@
 ﻿# Realiza a cópia
-Function Mirror($OrigPath, $DestPath, $ListOnly) {
+Function Mirror($origPath, $destPath, $toModify, $listOnly) {
+	If(-Not $toModify) {
+		PrintText ("`tNenhuma ação necessária");
+		# Return;  # Retirado por precaução. Mesmo que Robocopy não fazer nada, o executar
+	}
 	$list = "";
-	If($ListOnly) {
+	If($listOnly) {
 		$list = "/L";
 	}
-	Robocopy $OrigPath $DestPath /MIR /SJ /SL /R:1 /W:0 `
+	Robocopy $origPath $destPath /MIR /SJ /SL /R:1 /W:0 `
 		/XF `
 			$wildcardOfVersionedFile `
 			$wildcardOfRemovedFile `
