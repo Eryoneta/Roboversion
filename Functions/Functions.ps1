@@ -70,9 +70,14 @@ Function GetModifiedFilesMap($destPath) {
 		$Null = (Remove-Item $modifiedFilesList_FilePath);
 	}
 	$removedFoldersList = [System.Collections.ArrayList]::new();
-	ForEach($removedFolder In $removedFoldersList_File) {
-		If($removedFolder -Like $wildcardOfRemovedFolder) {
-			$Null = $removedFoldersList.Add($removedFolder);
+	ForEach($removedFolderPath In $removedFoldersList_File) {
+		If(-Not $removedFolderPath) {
+			Continue;
+		}
+		$removedFolderPath = $removedFolderPath.Trim();
+		$removedFolderName = (Split-Path -Path $removedFolderPath -Leaf);
+		If($removedFolderName -Like $wildcardOfRemovedFolder) {
+			$Null = $removedFoldersList.Add($removedFolderPath);
 		}
 	}
 	# Ordena lista de arquivos versionados e removidos, e pastas removidas
@@ -137,8 +142,7 @@ Function GetWillModifyFilesMap($origPath, $destPath) {
 				$Null = $willModifyList.Add($newFile);
 				$willModify = $True;
 			# Arquivo a criar
-			} ElseIf(Test-Path -LiteralPath $oldFilePath -PathType "Leaf") { 
-					# Pastas devem ser listadas pelas a-deletar, mas também lista as presentes
+			} ElseIf(Test-Path -LiteralPath $oldFilePath -PathType "Leaf") { # Pastas devem ser listadas pelas a-deletar, mas também lista as presentes
 				# Não listar arquivos a criar
 				$willModify = $True;
 			}
@@ -200,6 +204,9 @@ Function GetFileMap($filePathList) {
 		}
 		$filePath = $filePath.Trim();
 		$newFile = (GetFileItem $filePath);
+		If(-Not $newFile) {
+			Continue;
+		}
 		$fileBasePath = (Split-Path -Path $filePath -Parent);
 		$baseName = (Join-Path -Path $fileBasePath -ChildPath ($newFile.BaseName + $newFile.Extension));
 		# Ex.:
