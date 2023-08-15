@@ -7,7 +7,7 @@
 #     Dessa forma, os que sobrarem são sempre nomeados de $remotionCountdown até 0, do mais novo ao mais antigo
 #   Se $destructive = $False:
 #     Todos serão eventualmente deletados conforme seus contadores atingem [0]
-Function UpdateRemoved($modifiedFilesMap, $removedFolderList, $remotionCountdown, $destructive, $listOnly) {
+Function UpdateRemoved($modifiedFilesMap, $removedFoldersList, $remotionCountdown, $destructive, $listOnly) {
 	If($remotionCountdown -eq 0) {
 		# Com 0, não deve manter removidos
 		$remotionCountdown = -1;
@@ -17,7 +17,7 @@ Function UpdateRemoved($modifiedFilesMap, $removedFolderList, $remotionCountdown
 	$filesToRename = [System.Collections.ArrayList]::new();
 	# Não-Destrutivo = Diminui o RemotionCountdown, e deleta os com RemotionCountdown igual a 0
 	If(-Not $destructive) {
-		ForEach($removedFolder In $removedFolderList) {
+		ForEach($removedFolder In $removedFoldersList) {
 			If(IsFolderEmpty $removedFolder.Path) {
 				$Null = $filesToDelete.Add($removedFolder);
 			}
@@ -45,7 +45,7 @@ Function UpdateRemoved($modifiedFilesMap, $removedFolderList, $remotionCountdown
 		}
 	# Destrutivo = Aplica $remotionCountdown, listando arquivos para renomear ou deletar
 	} Else {
-		ForEach($removedFolder In $removedFolderList) {
+		ForEach($removedFolder In $removedFoldersList) {
 			If(IsFolderEmpty $removedFolder.Path) {
 				$Null = $filesToDelete.Add($removedFolder);
 			}
