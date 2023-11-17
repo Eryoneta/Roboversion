@@ -61,42 +61,51 @@ Function RoboVersion {
 	. (Join-Path -Path $PSScriptRoot -ChildPath "\Functions\UpdateToVersion.ps1");
 	. (Join-Path -Path $PSScriptRoot -ChildPath "\Functions\UpdateToRemove.ps1");
 	. (Join-Path -Path $PSScriptRoot -ChildPath "\Functions\Mirror.ps1");
-	PrintText ("");
-	PrintText ("");
-	PrintText ("RoboVersion: " + $OrigPath + " ---> " + $DestPath);
-	PrintText ("");
+	PrintText "";
+	PrintText "";
+	PrintText "RoboVersion: " -FC "DarkBlue" -N;
+	PrintText "$OrigPath" -FC "White" -N;
+	PrintText " ---> " -FC "DarkCyan" -N;
+	PrintText "$DestPath" -FC "White";
+	PrintText "";
 	# Lista os arquivos versionados e removidos
-	PrintText ("Escaneando por versionados e removidos...");
+	PrintText "Escaneando por versionados e removidos..." -FC "DarkCyan";
 	$modifiedLists = (GetModifiedFilesMap $DestPath);
 	$modifiedFilesMap = $modifiedLists.ModifiedFilesMap;
 	$removedFoldersList = $modifiedLists.RemovedFoldersList;
-	PrintText ("");
+	PrintText "";
 	# Atualiza os arquivos versionados e removidos em $DestPath
-	PrintText ("Etapa 1: Tratar arquivos versionados no destino");
+	PrintText "Etapa 1: " -FC "DarkBlue" -N;
+	PrintText "Tratar arquivos versionados no destino" -FC "DarkCyan";
 	$modifiedFilesMap = (UpdateVersioned $modifiedFilesMap $VersionLimit $Destructive $ListOnly);
-	PrintText ("");
-	PrintText ("Etapa 2: Tratar arquivos removidos no destino");
+	PrintText "";
+	PrintText "Etapa 2: " -FC "DarkBlue" -N;
+	PrintText "Tratar arquivos removidos no destino" -FC "DarkCyan";
 	$modifiedFilesMap = (UpdateRemoved $modifiedFilesMap $removedFoldersList $RemotionCountdown $Destructive $ListOnly);
-	PrintText ("");
+	PrintText "";
 	# Lista os arquivos a versionar ou remover
-	PrintText ("Escaneando por arquivos a serem modificados ou deletados...");
+	PrintText "Escaneando por arquivos a serem modificados ou deletados..." -FC "DarkCyan";
 	$willModifyLists = (GetWillModifyFilesMap $OrigPath $DestPath);
 	$toModify = $willModifyLists.WillModify;
 	$toVersionList = $willModifyLists.WillModifyList;
 	$toRemoveList = $willModifyLists.WillDeleteList;
 	$toRemoveFolderList = $willModifyLists.WillDeleteFolderList;
-	PrintText ("");
+	PrintText "";
 	# Atualiza os arquivos a versionar ou remover em $DestPath
-	PrintText ("Etapa 3: Criar versões de arquivos modificados na origem");
+	PrintText "Etapa 3: " -FC "DarkBlue" -N;
+	PrintText "Criar versões de arquivos modificados na origem" -FC "DarkCyan";
 	$modifiedFilesMap = (UpdateToVersion $modifiedFilesMap $toVersionList $VersionLimit $ListOnly);
-	PrintText ("");
-	PrintText ("Etapa 4: Criar remoções de arquivos deletados na origem");
+	PrintText "";
+	PrintText "Etapa 4: " -FC "DarkBlue" -N;
+	PrintText "Criar remoções de arquivos deletados na origem" -FC "DarkCyan";
 	$modifiedFilesMap = (UpdateToRemove $modifiedFilesMap $toRemoveList $toRemoveFolderList $RemotionCountdown $ListOnly);
-	PrintText ("");
-	PrintText ("Etapa 5: Iniciar Robocopy e realizar espelhamento");
+	PrintText "";
+	PrintText "Etapa 5: " -FC "DarkBlue" -N;
+	PrintText "Iniciar Robocopy e realizar espelhamento" -FC "DarkCyan";
 	# Realiza a cópia
 	Mirror $OrigPath $DestPath $toModify $ListOnly;
-	PrintText ("");
-	PrintText ("RoboVersion: Concluído");
-	PrintText ("");
+	PrintText "";
+	PrintText "RoboVersion: " -FC "DarkBlue" -N;
+	PrintText "Concluído" -FC "DarkCyan";
+	PrintText "";
 }

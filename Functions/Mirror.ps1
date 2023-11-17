@@ -1,7 +1,7 @@
 ﻿# Realiza a cópia
 Function Mirror($origPath, $destPath, $toModify, $listOnly) {
 	If(-Not $toModify) {
-		PrintText ("`tNenhuma ação necessária");
+		PrintText "`tNenhuma ação necessária" -FC "DarkCyan";
 		# Return;  # Retirado por precaução. Mesmo que Robocopy não fazer nada, o executar
 	}
 	$list = "";
@@ -15,5 +15,5 @@ Function Mirror($origPath, $destPath, $toModify, $listOnly) {
 		/XD `
 			$wildcardOfRemovedFolder `
 		$list /NJH /NJS /NDL;
-	PrintText ("");
+	PrintText "";
 }

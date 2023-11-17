@@ -29,8 +29,29 @@ $wildcardOfRemovedFile = ("*" + $remotionStart + "*" + $remotionEnd + "*");
 $wildcardOfRemovedFolder = ("*" + $remotionFolder + "*");
 
 # Print sem interromper o fluxo
-Function PrintText($text) {
-	Write-Information -MessageData ($text) -InformationAction Continue;
+Function PrintText {
+	[CmdletBinding()]
+	Param(
+		[Parameter(Mandatory = $True, Position = 0)]
+			[Alias("M")]
+			[Object] $MessageData = "",
+		[Parameter()]
+			[Alias("FC")]
+			[ConsoleColor] $ForegroundColor = $Host.UI.RawUI.ForegroundColor,
+		[Parameter()]
+			[Alias("BC")]
+			[ConsoleColor] $BackgroundColor = $Host.UI.RawUI.BackgroundColor,
+		[Parameter()]
+			[Alias("N")]
+			[Switch] $NoNewline = $False
+	)
+	$message = [System.Management.Automation.HostInformationMessage] @{
+		Message = $MessageData;
+		ForegroundColor = $ForegroundColor;
+		BackgroundColor = $BackgroundColor;
+		NoNewline = $NoNewline;
+	};
+	Write-Information $message -InformationAction "Continue";
 }
 
 # Retorna um fileMap de arquivos modificados no $destPath
