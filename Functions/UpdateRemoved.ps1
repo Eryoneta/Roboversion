@@ -91,7 +91,7 @@ Function UpdateRemoved($modifiedFilesMap, $removedFoldersList, $remotionCountdow
 	}
 	# Output
 	If($filesToDelete.Count -eq 0 -And $filesToRename.Count -eq 0) {
-		PrintText ("`tNenhuma ação necessária");
+		PrintText "`tNenhuma ação necessária" -FC "DarkCyan";
 	}
 	# Da lista, deleta arquivos
 	DeleteFilesList $modifiedFilesMap $filesToDelete $listOnly;

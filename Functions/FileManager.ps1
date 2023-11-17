@@ -6,7 +6,8 @@ Function DeleteFilesList($modifiedFilesMap, $filesToDelete, $listOnly) {
 	# Da lista, deleta arquivos
 	ForEach($fileToDelete In $filesToDelete) {
 		# Deleta arquivo
-		PrintText ("`tDeleted`t" + $fileToDelete.Path);
+		PrintText "`tDeleted`t" -FC "DarkCyan" -N;
+		PrintText "$($fileToDelete.Path)" -FC "White";
 		If(-Not $listOnly) {
 			$Null = (Remove-Item -LiteralPath $fileToDelete.Path -Recurse -Force);
 		}
@@ -35,7 +36,10 @@ Function RenameRemovedFilesList($modifiedFilesMap, $filesToRename, $listOnly) {
 		}
 		$remotion = (" " + $remotionStart + $newRemotionCountdown + $remotionEnd);
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
-		PrintText ("`tRenamed`t" + $fileToRename.Path + " ---> " + $newName);
+		PrintText "`tRenamed`t" -FC "DarkCyan" -N;
+		PrintText "$($fileToRename.Path)" -FC "White" -N;
+		PrintText " ---> " -FC "DarkCyan" -N;
+		PrintText "$newName" -FC "White";
 		If(-Not $listOnly) {
 			$Null = (Rename-Item -LiteralPath $fileToRename.Path -NewName $newName -Force);
 		}
@@ -67,7 +71,10 @@ Function RenameVersionedFilesList($modifiedFilesMap, $filesToRename, $listOnly) 
 			$remotion = (" " + $remotionStart + $fileToRename.RemotionCountdown + $remotionEnd);
 		}
 		$newName = ($fileToRename.BaseName + $version + $remotion + $fileToRename.Extension);
-		PrintText ("`tRenamed`t" + $fileToRename.Path + " ---> " + $newName);
+		PrintText "`tRenamed`t" -FC "DarkCyan" -N;
+		PrintText "$($fileToRename.Path)" -FC "White" -N;
+		PrintText " ---> " -FC "DarkCyan" -N;
+		PrintText "$newName" -FC "White";
 		If(-Not $listOnly) {
 			$Null = (Rename-Item -LiteralPath $fileToRename.Path -NewName $newName -Force);
 		}
@@ -101,7 +108,10 @@ Function CopyVersionedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
 		$fileBasePath = (Split-Path -Path $fileToCopy.Path -Parent);
 		$newName = ($fileToCopy.BaseName + $version + $remotion + $fileToCopy.Extension);
 		$newPath = (Join-Path -Path $fileBasePath -ChildPath $newName);
-		PrintText ("`tCopied`t" + $fileToCopy.Path + " ---> " + $newPath);
+		PrintText "`tCopied`t" -FC "DarkCyan" -N;
+		PrintText "$($fileToCopy.Path)" -FC "White" -N;
+		PrintText " ---> " -FC "DarkCyan" -N;
+		PrintText "$newPath" -FC "White";
 		If(-Not $listOnly) {
 			$Null = (Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force);
 		}
@@ -138,7 +148,10 @@ Function CopyRemovedFilesList($modifiedFilesMap, $filesToCopy, $listOnly) {
 		$fileBasePath = (Split-Path -Path $fileToCopy.Path -Parent);
 		$newName = ($fileToCopy.BaseName + $version + $remotion + $fileToCopy.Extension);
 		$newPath = (Join-Path -Path $fileBasePath -ChildPath $newName);
-		PrintText ("`tCopied`t" + $fileToCopy.Path + " ---> " + $newPath);
+		PrintText "`tCopied`t" -FC "DarkCyan" -N;
+		PrintText "$($fileToCopy.Path)" -FC "White" -N;
+		PrintText " ---> " -FC "DarkCyan" -N;
+		PrintText "$newPath" -FC "White";
 		If(-Not $listOnly) {
 			If($isFolder) {
 				$Null = (Copy-Item -LiteralPath $fileToCopy.Path -Destination $newPath -Force);
