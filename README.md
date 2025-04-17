@@ -2,6 +2,14 @@
 
 Based on _Robocopy_, Roboversion is a script based on _PowerShell_ capable of not only mirroring a folder system, but also versioning all of its files. A simple, yet effective, backup solution.
 
+## _Notice_
+
+<i>
+  This project will not receive any more updates. I've long since moved to a Linux based OS, and those don't have Robocopy, which is the core of Roboversion.
+
+  Also, rsnapshot is a way better alternative. No need to reinvent the wheel.
+</i>
+
 ## Usage
 
 Opening a _PowerShell_ console, run "`. "PATH_TO_FOLDER/RoboVersion.ps1";`"(The "`.`" is important!), where "`PATH_TO_FOLDER`" leads to the "`RoboVersion.ps1`" file.
